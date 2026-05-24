@@ -1,29 +1,39 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useAppStore, Message } from "@/store/app-store";
 import { LayoutPanelLeft, Send, Loader2, Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Basic syntax highlighting style
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
 export function ChatArea() {
-  const { sidebarOpen, toggleSidebar, provider, model } = useAppStore();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { 
+    sidebarOpen, 
+    toggleSidebar, 
+    provider, 
+    model, 
+    messages, 
+    setMessages, 
+    googleApiKey, 
+    openaiApiKey 
+  } = useAppStore();
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (mounted) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, mounted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +50,13 @@ export function ChatArea() {
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
     try {
-      // In a real app, you would point this to your backend SSE endpoint
+      const activeKey = provider === 'google' ? googleApiKey : provider === 'openai' ? openaiApiKey : '';
       const response = await fetch("http://localhost:8000/api/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${activeKey || 'not-needed'}`
+        },
         body: JSON.stringify({
           provider,
           model,
@@ -106,6 +119,14 @@ export function ChatArea() {
       setIsStreaming(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="flex-1 flex flex-col h-full bg-background items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative">

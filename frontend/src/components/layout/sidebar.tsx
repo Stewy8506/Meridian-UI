@@ -6,11 +6,20 @@ import { MessageSquare, Settings, Plus, LayoutPanelLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useAppStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="w-[260px] h-full bg-card border-r border-border shrink-0" />;
+  }
 
   return (
     <>

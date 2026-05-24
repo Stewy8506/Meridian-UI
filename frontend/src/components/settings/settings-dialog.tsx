@@ -2,25 +2,52 @@
 
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/app-store";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function SettingsDialog({ open, onClose }: { open: boolean, onClose: () => void }) {
-  const { provider, setProvider, model, setModel } = useAppStore();
+  const { 
+    provider, 
+    setProvider, 
+    model, 
+    setModel, 
+    googleApiKey, 
+    openaiApiKey, 
+    setGoogleApiKey, 
+    setOpenaiApiKey 
+  } = useAppStore();
+  
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showGoogleKey, setShowGoogleKey] = useState(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+
+  const activeKey = provider === 'google' ? googleApiKey : provider === 'openai' ? openaiApiKey : '';
 
   useEffect(() => {
     if (!open) return;
+
+    if ((provider === 'google' || provider === 'openai') && !activeKey) {
+      setAvailableModels([]);
+      setError("Please configure your API key below to fetch available models.");
+      setLoading(false);
+      return;
+    }
 
     const fetchModels = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:8000/api/chat/models?provider=${provider}`);
+        const response = await fetch(`http://localhost:8000/api/chat/models?provider=${provider}`, {
+          headers: {
+            'Authorization': `Bearer ${activeKey || 'not-needed'}`
+          }
+        });
         if (!response.ok) {
-          throw new Error("Failed to fetch models");
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.detail || "Failed to fetch models");
         }
         const data = await response.json();
         setAvailableModels(data.models || []);
@@ -38,7 +65,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean, onClose: () =
     };
 
     fetchModels();
-  }, [provider, open, setModel]);
+  }, [provider, open, setModel, activeKey]);
 
 
   return (
@@ -65,7 +92,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean, onClose: () =
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* Provider Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-medium">Provider</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -85,6 +113,78 @@ export function SettingsDialog({ open, onClose }: { open: boolean, onClose: () =
                 </div>
               </div>
 
+              {/* API Key Inputs (Conditional) */}
+              {provider === 'google' && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium">Google API Key</label>
+                    <a 
+                      href="https://aistudio.google.com/app/apikey" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Get API Key
+                    </a>
+                  </div>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showGoogleKey ? "text" : "password"}
+                      value={googleApiKey}
+                      onChange={(e) => setGoogleApiKey(e.target.value)}
+                      className="w-full bg-background border border-border rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-shadow"
+                      placeholder="AIzaSy..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowGoogleKey(!showGoogleKey)}
+                      className="absolute right-3 p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showGoogleKey ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Required to fetch models and run Google models. Stored locally in your browser.
+                  </p>
+                </div>
+              )}
+
+              {provider === 'openai' && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium">OpenAI API Key</label>
+                    <a 
+                      href="https://platform.openai.com/api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Get API Key
+                    </a>
+                  </div>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showOpenaiKey ? "text" : "password"}
+                      value={openaiApiKey}
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      className="w-full bg-background border border-border rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-shadow"
+                      placeholder="sk-proj-..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                      className="absolute right-3 p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showOpenaiKey ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Required to fetch models and run OpenAI models. Stored locally in your browser.
+                  </p>
+                </div>
+              )}
+
+              {/* Model Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-medium">Model</label>
                 {loading ? (
@@ -101,8 +201,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean, onClose: () =
                       placeholder="e.g. Qwen 3.5 or gemma-4"
                     />
                     {error && (
-                      <p className="text-xs text-red-500 bg-red-500/10 p-2 rounded border border-red-500/20">
-                        Failed to fetch models: {error}. You can manually type the model identifier above.
+                      <p className="text-xs text-red-500 bg-red-500/10 p-2 rounded border border-red-500/20 whitespace-pre-wrap">
+                        {error} {!activeKey && (provider === 'google' || provider === 'openai') ? '' : 'You can manually type the model identifier above.'}
                       </p>
                     )}
                   </>

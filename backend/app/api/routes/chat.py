@@ -14,8 +14,17 @@ class ChatRequest(BaseModel):
 
 @router.post("/completions")
 async def chat_completions(request: ChatRequest, req: Request):
+    auth_header = req.headers.get("Authorization")
+    api_key = None
+    if auth_header and auth_header.startswith("Bearer "):
+        parts = auth_header.split(" ")
+        if len(parts) > 1:
+            api_key = parts[1]
+    if api_key == "not-needed" or not api_key:
+        api_key = None
+
     try:
-        provider_instance = ProviderRegistry.get_provider(request.provider)
+        provider_instance = ProviderRegistry.get_provider(request.provider, api_key=api_key)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
         
@@ -48,9 +57,18 @@ async def chat_completions(request: ChatRequest, req: Request):
     return EventSourceResponse(event_generator())
 
 @router.get("/models")
-async def get_models(provider: str):
+async def get_models(provider: str, req: Request):
+    auth_header = req.headers.get("Authorization")
+    api_key = None
+    if auth_header and auth_header.startswith("Bearer "):
+        parts = auth_header.split(" ")
+        if len(parts) > 1:
+            api_key = parts[1]
+    if api_key == "not-needed" or not api_key:
+        api_key = None
+
     try:
-        provider_instance = ProviderRegistry.get_provider(provider)
+        provider_instance = ProviderRegistry.get_provider(provider, api_key=api_key)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
         

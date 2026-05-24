@@ -20,9 +20,10 @@ class OpenAICompatibleProvider(BaseProvider):
         }
 
     async def generate(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> str:
+        clean_model = model.replace("models/", "") if model.startswith("models/") else model
         async with httpx.AsyncClient() as client:
             payload = {
-                "model": model,
+                "model": clean_model,
                 "messages": messages,
                 "stream": False,
                 **kwargs
@@ -38,9 +39,10 @@ class OpenAICompatibleProvider(BaseProvider):
             return data["choices"][0]["message"]["content"]
 
     async def stream(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> AsyncGenerator[str, None]:
+        clean_model = model.replace("models/", "") if model.startswith("models/") else model
         async with httpx.AsyncClient() as client:
             payload = {
-                "model": model,
+                "model": clean_model,
                 "messages": messages,
                 "stream": True,
                 **kwargs
@@ -73,5 +75,21 @@ class OpenAICompatibleProvider(BaseProvider):
             )
             response.raise_for_status()
             data = response.json()
-            return [model["id"] for model in data.get("data", [])]
+            
+            models = []
+            exclude_keywords = ["embedding", "imagen", "veo", "whisper", "tts", "dall-e", "clip", "aqa", "robotics", "moderation", "edit"]
+            for model in data.get("data", []):
+                model_id = model.get("id")
+                if not model_id:
+                    continue
+                # Strip 'models/' prefix if present
+                clean_id = model_id.replace("models/", "") if model_id.startswith("models/") else model_id
+                
+                # Check if it should be excluded (non-chat models)
+                if any(kw in clean_id.lower() for kw in exclude_keywords):
+                    continue
+                    
+                models.append(clean_id)
+            return models
+
 

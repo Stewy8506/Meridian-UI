@@ -4,26 +4,27 @@ from typing import Optional
 
 class ProviderRegistry:
     @staticmethod
-    def get_provider(provider_name: str) -> Optional[OpenAICompatibleProvider]:
+    def get_provider(provider_name: str, api_key: Optional[str] = None) -> Optional[OpenAICompatibleProvider]:
         if provider_name == "local":
             return OpenAICompatibleProvider(
                 base_url=settings.LOCAL_PROVIDER_URL,
                 api_key="not-needed"
             )
         elif provider_name == "google":
-            # Google AI Studio OpenAI compatible endpoint
-            if not settings.GOOGLE_API_KEY:
-                raise ValueError("GOOGLE_API_KEY is not set.")
+            key = api_key or settings.GOOGLE_API_KEY
+            if not key:
+                raise ValueError("Google API key is not set. Please configure it in Settings.")
             return OpenAICompatibleProvider(
                 base_url="https://generativelanguage.googleapis.com/v1beta/openai",
-                api_key=settings.GOOGLE_API_KEY
+                api_key=key
             )
         elif provider_name == "openai":
-            if not settings.OPENAI_API_KEY:
-                raise ValueError("OPENAI_API_KEY is not set.")
+            key = api_key or settings.OPENAI_API_KEY
+            if not key:
+                raise ValueError("OpenAI API key is not set. Please configure it in Settings.")
             return OpenAICompatibleProvider(
                 base_url="https://api.openai.com/v1",
-                api_key=settings.OPENAI_API_KEY
+                api_key=key
             )
         else:
             raise ValueError(f"Unknown provider: {provider_name}")
