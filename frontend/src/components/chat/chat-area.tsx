@@ -129,7 +129,10 @@ export function ChatArea() {
     openaiApiKey,
     hydrateChats,
     activeChatId,
-    updateChatTitle
+    updateChatTitle,
+    searchProvider,
+    tavilyApiKey,
+    exaApiKey
   } = useAppStore();
   
   const [input, setInput] = useState("");
@@ -249,6 +252,9 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
             provider,
             model,
             messages: currentMessages,
+            search_provider: searchProvider,
+            tavily_api_key: tavilyApiKey || null,
+            exa_api_key: exaApiKey || null,
           }),
         });
 

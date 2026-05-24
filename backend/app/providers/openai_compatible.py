@@ -20,7 +20,14 @@ class OpenAICompatibleProvider(BaseProvider):
         }
 
     async def generate(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> str:
+        search_provider = kwargs.pop("search_provider", "tavily")
+        tavily_api_key = kwargs.pop("tavily_api_key", None)
+        exa_api_key = kwargs.pop("exa_api_key", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
+        
+        from app.tools.registry import tool_registry
+        tools = tool_registry.get_all_schemas()
+        
         async with httpx.AsyncClient() as client:
             payload = {
                 "model": clean_model,
@@ -28,6 +35,9 @@ class OpenAICompatibleProvider(BaseProvider):
                 "stream": False,
                 **kwargs
             }
+            if tools:
+                payload["tools"] = tools
+                
             response = await client.post(
                 f"{self.base_url}/chat/completions",
                 headers=self._get_headers(),
@@ -36,10 +46,64 @@ class OpenAICompatibleProvider(BaseProvider):
             )
             response.raise_for_status()
             data = response.json()
-            return data["choices"][0]["message"]["content"]
+            message = data["choices"][0]["message"]
+            
+            # Check for tool calls
+            if "tool_calls" in message and message["tool_calls"]:
+                tool_calls = message["tool_calls"]
+                # Append assistant message with tool calls
+                messages.append(message)
+                
+                # Execute each tool call
+                for tc in tool_calls:
+                    tool_name = tc["function"]["name"]
+                    arguments_str = tc["function"]["arguments"]
+                    tool_call_id = tc["id"]
+                    
+                    try:
+                        args = json.loads(arguments_str) if arguments_str else {}
+                    except json.JSONDecodeError:
+                        args = {}
+                        
+                    tool = tool_registry.get_tool(tool_name)
+                    if tool:
+                        tool_result = await tool.execute(
+                            search_provider=search_provider,
+                            tavily_api_key=tavily_api_key,
+                            exa_api_key=exa_api_key,
+                            **args
+                        )
+                    else:
+                        tool_result = f"Error: Tool {tool_name} not found."
+                        
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call_id,
+                        "name": tool_name,
+                        "content": tool_result
+                    })
+                
+                # Recurse to generate response based on tool results
+                return await self.generate(
+                    messages=messages,
+                    model=model,
+                    search_provider=search_provider,
+                    tavily_api_key=tavily_api_key,
+                    exa_api_key=exa_api_key,
+                    **kwargs
+                )
+            
+            return message["content"]
 
     async def stream(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> AsyncGenerator[str, None]:
+        search_provider = kwargs.pop("search_provider", "tavily")
+        tavily_api_key = kwargs.pop("tavily_api_key", None)
+        exa_api_key = kwargs.pop("exa_api_key", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
+        
+        from app.tools.registry import tool_registry
+        tools = tool_registry.get_all_schemas()
+        
         async with httpx.AsyncClient() as client:
             payload = {
                 "model": clean_model,
@@ -47,6 +111,12 @@ class OpenAICompatibleProvider(BaseProvider):
                 "stream": True,
                 **kwargs
             }
+            if tools:
+                payload["tools"] = tools
+                
+            tool_calls_map = {}
+            is_tool_call = False
+            
             async with client.stream(
                 "POST", 
                 f"{self.base_url}/chat/completions", 
@@ -60,11 +130,88 @@ class OpenAICompatibleProvider(BaseProvider):
                         data_str = line[6:]
                         try:
                             data = json.loads(data_str)
-                            content = data["choices"][0]["delta"].get("content")
-                            if content:
-                                yield content
+                            choice = data["choices"][0]
+                            delta = choice.get("delta", {})
+                            
+                            # Check if the model is returning tool calls
+                            if "tool_calls" in delta:
+                                is_tool_call = True
+                                for tc in delta["tool_calls"]:
+                                    idx = tc["index"]
+                                    if idx not in tool_calls_map:
+                                        tool_calls_map[idx] = {
+                                            "id": "",
+                                            "type": "function",
+                                            "function": {"name": "", "arguments": ""}
+                                        }
+                                    if "id" in tc:
+                                        tool_calls_map[idx]["id"] += tc["id"]
+                                    if "function" in tc:
+                                        f = tc["function"]
+                                        if "name" in f:
+                                            tool_calls_map[idx]["function"]["name"] += f["name"]
+                                        if "arguments" in f:
+                                            tool_calls_map[idx]["function"]["arguments"] += f["arguments"]
+                            
+                            # If not a tool call, yield content if any
+                            if not is_tool_call:
+                                content = delta.get("content")
+                                if content:
+                                    yield content
                         except json.JSONDecodeError:
                             continue
+            
+            # If we accumulated tool calls, execute them and recurse
+            if is_tool_call and tool_calls_map:
+                tool_calls = [v for k, v in sorted(tool_calls_map.items())]
+                
+                # Append assistant message with tool calls
+                messages.append({
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": tool_calls
+                })
+                
+                # Execute each tool call
+                for tc in tool_calls:
+                    tool_name = tc["function"]["name"]
+                    arguments_str = tc["function"]["arguments"]
+                    tool_call_id = tc["id"]
+                    
+                    try:
+                        args = json.loads(arguments_str) if arguments_str else {}
+                    except json.JSONDecodeError:
+                        args = {}
+                        
+                    tool = tool_registry.get_tool(tool_name)
+                    if tool:
+                        tool_result = await tool.execute(
+                            search_provider=search_provider,
+                            tavily_api_key=tavily_api_key,
+                            exa_api_key=exa_api_key,
+                            **args
+                        )
+                    else:
+                        tool_result = f"Error: Tool {tool_name} not found."
+                        
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call_id,
+                        "name": tool_name,
+                        "content": tool_result
+                    })
+                
+                # Recursively stream to get final response based on tool results
+                async for chunk in self.stream(
+                    messages=messages,
+                    model=model,
+                    search_provider=search_provider,
+                    tavily_api_key=tavily_api_key,
+                    exa_api_key=exa_api_key,
+                    **kwargs
+                ):
+                    yield chunk
+
 
     async def get_models(self) -> List[str]:
         async with httpx.AsyncClient() as client:

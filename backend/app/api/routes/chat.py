@@ -11,6 +11,9 @@ class ChatRequest(BaseModel):
     model: str
     messages: List[Dict[str, Any]]
     temperature: Optional[float] = 0.7
+    search_provider: Optional[str] = "tavily"
+    tavily_api_key: Optional[str] = None
+    exa_api_key: Optional[str] = None
 
 @router.post("/completions")
 async def chat_completions(request: ChatRequest, req: Request):
@@ -36,7 +39,10 @@ async def chat_completions(request: ChatRequest, req: Request):
             async for chunk in provider_instance.stream(
                 messages=request.messages,
                 model=request.model,
-                temperature=request.temperature
+                temperature=request.temperature,
+                search_provider=request.search_provider,
+                tavily_api_key=request.tavily_api_key,
+                exa_api_key=request.exa_api_key
             ):
                 if await req.is_disconnected():
                     break

@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     
+    # Search Engine API Keys
+    TAVILY_API_KEY: str | None = None
+    EXA_API_KEY: str | None = None
+    
     # Local Provider Config
     LOCAL_PROVIDER_URL: str = "http://localhost:1234/v1" # LM Studio default
     

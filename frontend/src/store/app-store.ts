@@ -19,6 +19,9 @@ interface AppState {
   sidebarOpen: boolean;
   googleApiKey: string;
   openaiApiKey: string;
+  searchProvider: 'tavily' | 'exa';
+  tavilyApiKey: string;
+  exaApiKey: string;
   messages: Message[];
   chats: ChatSession[];
   activeChatId: string | null;
@@ -27,6 +30,9 @@ interface AppState {
   toggleSidebar: () => void;
   setGoogleApiKey: (key: string) => void;
   setOpenaiApiKey: (key: string) => void;
+  setSearchProvider: (provider: 'tavily' | 'exa') => void;
+  setTavilyApiKey: (key: string) => void;
+  setExaApiKey: (key: string) => void;
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   clearMessages: () => void;
   
@@ -46,6 +52,9 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       googleApiKey: '',
       openaiApiKey: '',
+      searchProvider: 'tavily',
+      tavilyApiKey: '',
+      exaApiKey: '',
       messages: [],
       chats: [],
       activeChatId: null,
@@ -54,6 +63,9 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setOpenaiApiKey: (key) => set({ openaiApiKey: key }),
+      setSearchProvider: (provider) => set({ searchProvider: provider }),
+      setTavilyApiKey: (key) => set({ tavilyApiKey: key }),
+      setExaApiKey: (key) => set({ exaApiKey: key }),
       
       setMessages: (messagesOrFn) => set((state) => {
         const nextMessages = typeof messagesOrFn === 'function' ? messagesOrFn(state.messages) : messagesOrFn;
