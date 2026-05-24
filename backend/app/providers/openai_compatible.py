@@ -77,7 +77,11 @@ class OpenAICompatibleProvider(BaseProvider):
             data = response.json()
             
             models = []
-            exclude_keywords = ["embedding", "imagen", "veo", "whisper", "tts", "dall-e", "clip", "aqa", "robotics", "moderation", "edit"]
+            exclude_keywords = [
+                "embedding", "imagen", "veo", "whisper", "tts", "dall-e", "clip", 
+                "aqa", "robotics", "moderation", "edit", "babbage", "davinci", 
+                "curie", "ada", "bison", "gecko", "unicorn", "audio", "realtime"
+            ]
             for model in data.get("data", []):
                 model_id = model.get("id")
                 if not model_id:
