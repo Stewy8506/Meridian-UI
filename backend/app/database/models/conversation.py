@@ -24,3 +24,5 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     conversation = relationship("Conversation", back_populates="messages")
+
+print("hello world")
