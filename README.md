@@ -33,7 +33,7 @@ Switch seamlessly between **25+ providers** from a single unified interface.
 ### 🧠 Dynamic Skill Engine (Agentic Tools)
 Equip your AI with real-time capabilities. A two-stage intent router uses keyword heuristics and TF-IDF cosine similarity to dynamically select the best tools for any given prompt, bypassing context window bloat.
 - **Auto-registering:** Drop a Python script in the skills directory, and it is instantly registered.
-- **Built-in Arsenal:** Web search (Tavily/Exa), Wikipedia, ArXiv search, local memory recall, date/time utilities, and JSON transformations.
+- **Built-in Arsenal:** Web search (Tavily/Exa), Wikipedia summaries, ArXiv academic search, local vector memory recall/storage, date/time utilities, mathematical expression calculator, secure random UUID generator, and JSON formatting transformations.
 - **Marketplace UI:** Browse, toggle, and live-test your tools right from the dashboard.
 
 ### 📚 RAG & Knowledge Collections
@@ -63,6 +63,7 @@ Equip your workspace with specialized AI agents tailored to specific tasks.
 - **Built-in Expert Presets:** Instant access to pre-configured profiles including a Code Reviewer, Technical Interviewer, Scientific Research Assistant, Socratic Tutor, and Creative Writer.
 - **Visual Profile Builder:** Configure custom persona metadata, system instructions, temperature parameters, and unique greeting behaviors.
 - **Inline Switching:** Toggle active personas directly in the chat window header.
+- **Default Everyday Assistant:** Defaults to a standard, everyday AI assistant when no persona profile is active, and persists selected personas across sessions/reloads.
 
 ### 🔗 Sequential Workflows (Prompt Chains)
 Automate complex multi-model pipelines with a sequential prompt execution runner.
@@ -80,15 +81,18 @@ A dedicated side-workspace for writing documents, editing source code, and previ
 Create, categorize, and autocomplete template shortcuts.
 - **Auto Variables Extractor:** Automatically parses variable placeholders (e.g., `{{topic}}`, `{{language}}`) from prompt templates.
 - **Prompt Compiling Form:** Displays a custom input form to replace placeholders before inserting compiled text into the chat prompt area.
+- **Tag Organization & Search:** Organize template prompts with custom tags, enabling rapid semantic sorting and search filters.
 
 ### 🔐 Secure Auth & State Persistence
 Security and state management you can trust.
 - **Multi-User Isolation:** JWT authentication with bcrypt password hashing ensures complete privacy.
 - **Encrypted Keys:** Your provider API keys are encrypted at rest using Fernet (AES-128-CBC) and only decrypted in memory.
 - **Advanced State:** Pin, tag, branch, and fork conversations. Fully compatible with OpenWebUI history imports.
+- **AI Conversational Auto-Titling:** Spawns a background worker on the first exchange using Google's `gemini-2.5-flash` to automatically generate a clean, context-appropriate 3-5 word title for the chat room.
 
 ### 🔌 Interface & Additional Capabilities
-- **Multimodal Inputs:** Browser-native Speech-to-Text (Voice Input) and Text-to-Speech (TTS) alongside vision support for compatible models.
+- **Multimodal Inputs:** Browser-native Speech-to-Text (Voice Input), Text-to-Speech (TTS), and vision support for multimodal models.
+- **Premium TTS Engines:** Integrates advanced API-driven Text-to-Speech voices from **OpenAI** and **ElevenLabs**, allowing customization of speed rates, pitch, and high-fidelity custom voices.
 - **Interface Customization:** Adjust layout densities, toggle panel sizes, customize keyboard shortcuts, and write custom CSS overrides directly in the settings panel.
 - **Workspace Administration:** Toggle open registrations, whitelist specific email domains (CSV format), and view live audit trails of diagnostic backend connections (Ollama, Gemini, vector store, etc.).
 
