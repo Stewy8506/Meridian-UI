@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.database.session import get_db
 from app.database.models.user import User, UserApiKey
+from app.providers.provider_configs import PROVIDERS_CONFIG
 from app.providers.registry import ProviderRegistry
 from typing import List
 
@@ -22,6 +23,21 @@ async def list_keys(
     keys = db.query(UserApiKey).filter(UserApiKey.user_id == current_user.id).all()
     return [{"provider": k.provider_name, "created_at": k.created_at} for k in keys]
 
+@router.get("/providers")
+async def list_providers(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all available providers and their configuration status."""
+    keys = db.query(UserApiKey).filter(UserApiKey.user_id == current_user.id).all()
+    user_keys = {}
+    for k in keys:
+        try:
+            user_keys[k.provider_name] = k.decrypt_key()
+        except Exception:
+            user_keys[k.provider_name] = "exists"
+    return ProviderRegistry.list_available(user_keys)
+
 @router.post("")
 async def save_key(
     payload: ApiKeySave,
@@ -36,7 +52,7 @@ async def save_key(
         raise HTTPException(status_code=400, detail="API key cannot be empty.")
         
     # Check if this is a valid provider
-    valid_providers = ["google", "openai"] # expand as more providers are added
+    valid_providers = list(PROVIDERS_CONFIG.keys()) + ["tavily", "exa"]
     if provider not in valid_providers:
         raise HTTPException(status_code=400, detail=f"Invalid provider: '{provider}'")
 

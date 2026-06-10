@@ -6,6 +6,7 @@ from app.providers.registry import ProviderRegistry
 from app.core.auth import get_current_user
 from app.database.session import get_db
 from app.database.models.user import User, UserApiKey
+from app.database.models.knowledge import KnowledgeBase
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -18,6 +19,7 @@ class ChatRequest(BaseModel):
     search_provider: Optional[str] = "tavily"
     tavily_api_key: Optional[str] = None
     exa_api_key: Optional[str] = None
+    knowledge_base_ids: Optional[List[str]] = None
 
 @router.post("/completions")
 async def chat_completions(
@@ -46,6 +48,51 @@ async def chat_completions(
     tavily_api_key = tavily_db_key.decrypt_key() if tavily_db_key else request.tavily_api_key
     exa_api_key = exa_db_key.decrypt_key() if exa_db_key else request.exa_api_key
 
+    # RAG Context Retrieval
+    context_str = ""
+    if request.knowledge_base_ids:
+        # Verify ownership of requested knowledge bases
+        kbs = db.query(KnowledgeBase).filter(
+            KnowledgeBase.id.in_(request.knowledge_base_ids),
+            KnowledgeBase.user_id == current_user.id
+        ).all()
+        
+        verified_kb_ids = [kb.id for kb in kbs]
+        if verified_kb_ids:
+            # Get latest user message to query with
+            query = ""
+            for msg in reversed(request.messages):
+                if msg.get("role") == "user":
+                    query = msg.get("content", "")
+                    break
+            
+            if query:
+                from app.rag.retriever import Retriever
+                collection_names = [f"kb_{kb_id}" for kb_id in verified_kb_ids]
+                
+                # Fetch relevant chunks (run synchronous CPU bound work inside to_thread if needed,
+                # but direct execution is fine for fast local vector stores or fallback)
+                import asyncio
+                results = await asyncio.to_thread(
+                    Retriever.retrieve_context,
+                    query,
+                    collection_names,
+                    5,
+                    api_key,
+                    request.provider
+                )
+                context_str = Retriever.format_context(results)
+
+    # Inject context into latest user message if retrieved
+    if context_str:
+        messages_copy = [dict(msg) for msg in request.messages]
+        for msg in reversed(messages_copy):
+            if msg.get("role") == "user":
+                msg["content"] = f"{context_str}\n\nUser Question:\n{msg.get('content', '')}"
+                break
+    else:
+        messages_copy = request.messages
+
     try:
         provider_instance = ProviderRegistry.get_provider(request.provider, api_key=api_key)
     except ValueError as e:
@@ -57,7 +104,7 @@ async def chat_completions(
     async def event_generator():
         try:
             async for chunk in provider_instance.stream(
-                messages=request.messages,
+                messages=messages_copy,
                 model=request.model,
                 temperature=request.temperature,
                 search_provider=request.search_provider,

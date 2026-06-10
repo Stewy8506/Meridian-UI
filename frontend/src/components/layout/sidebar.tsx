@@ -262,26 +262,38 @@ export function Sidebar() {
             <button
               onClick={() => setView('chat')}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold cursor-pointer transition-all",
+                "flex-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-[10px] md:text-xs font-semibold cursor-pointer transition-all truncate",
                 currentView === 'chat'
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Workspace
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+              <span>Chat</span>
             </button>
             <button
               onClick={() => setView('marketplace')}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold cursor-pointer transition-all",
+                "flex-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-[10px] md:text-xs font-semibold cursor-pointer transition-all truncate",
                 currentView === 'marketplace'
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Wrench className="w-3.5 h-3.5" />
-              Marketplace
+              <Wrench className="w-3.5 h-3.5 shrink-0" />
+              <span>Skills</span>
+            </button>
+            <button
+              onClick={() => setView('knowledge')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-[10px] md:text-xs font-semibold cursor-pointer transition-all truncate",
+                currentView === 'knowledge'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Folder className="w-3.5 h-3.5 shrink-0" />
+              <span>Files</span>
             </button>
           </div>
 

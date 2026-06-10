@@ -84,25 +84,59 @@ A secure persistence layer for multiple users.
 
 ---
 
+## 🌐 Phase 4 — Universal Provider System (25+ Providers)
+
+A unified model invocation system mapping 25+ cloud, local, and gateway endpoints.
+
+- **provider_configs.py**: Configuration schemas defining IDs, adapters, base URLs, and quirk adjustments (e.g. headers, prefix trimming) for 25+ endpoints (OpenAI, Anthropic, Google Gemini, Groq, Cohere, DeepSeek, OpenRouter, Perplexity, Bedrock, Azure, Mistral, Together AI, Fireworks AI, SiliconFlow, Cerebras, SambaNova, Cloudflare, etc.).
+- **registry.py**: Dynamic manager loading active providers and testing connections. Exposes provider states (configured/offline) directly to client dashboards.
+- **custom_adapters**: Native non-OpenAI message-streaming adapters:
+  - **anthropic.py**: Custom client supporting Claude's native system format, tool outputs, and reasoning/thinking tag streaming.
+  - **cohere.py**: Cohere Chat v2 API mapper.
+  - **bedrock.py**: AWS Bedrock Runtime client using boto3 executing synchronous calls inside asyncio thread pools with SigV4 request signatures.
+  - **azure_openai.py**: Deployment-based endpoint and API versioning adapter.
+- **provider-grid.tsx**: Interactive settings grid displaying cards for all 25+ providers grouped by type (Local, Frontier, Specialized), supporting credential inputs, secure decryption, and active connection tests.
+- **settings-dialog.tsx**: Dynamically pulls configured engines from backend endpoints and displays active selections.
+
+---
+
+## 📚 Phase 5 — RAG & Knowledge Management
+
+A localized Retrieval-Augmented Generation pipeline allowing users to attach document databases to chat prompts.
+
+- **document_processor.py**: Multi-extension extraction supporting PDF (`PyMuPDF`), Word (`python-docx`), TXT, MD, CSV, and JSON formats, with a character-level sentence-aligned overlap text splitter.
+- **embeddings.py**: Unified generator utilizing local HuggingFace `all-MiniLM-L6-v2` (`sentence-transformers`), falling back to remote APIs (OpenAI / Gemini Embeddings), or a lightweight character-hash tf-idf fallback.
+- **vector_store.py**: Resilient SQLite-backed vector store fallback. Resolves windows SQLite database versioning constraints (ChromaDB SQLite >= 3.35.0 requirement) by running a custom, native-python SQLite collection manager computing cosine similarity math in-memory.
+- **retriever.py**: Performs multi-collection semantic searches, dedups chunks across files, and formats document excerpts into context blocks.
+- **API Routes**:
+  - **documents.py**: Endpoints to upload files (`UploadFile`), parse, chunk, embed, index, and delete documents.
+  - **knowledge.py**: CRUD endpoints to create, fetch details of, and delete named knowledge collections.
+  - **chat.py**: Intercepts chat requests, performs semantic queries on selected collections, and prepends formatted results to prompt messages.
+- **knowledge-panel.tsx**: Drag-and-drop document hub showing upload state indicators, collection chunk statistics, and file registries.
+- **rag-toggle.tsx**: Input form dropdown checklist for selecting search-augmenting collections for the current chat session.
+
+---
+
 ## 🏛️ Project Architecture
 
 ```
 AI Workspace/
 ├── backend/            # FastAPI ASGI Backend Service
 │   ├── app/
-│   │   ├── api/        # Endpoint routers (auth, chat, keys, skills, conversations)
+│   │   ├── api/        # Endpoint routers (auth, chat, keys, skills, conversations, documents, knowledge)
 │   │   ├── core/       # Security utilities, JWT setups, and configs
 │   │   ├── database/   # Declarative SQLAlchemy SQLite models
-│   │   ├── providers/  # Abstracted LLM clients (OpenAI, Gemini, Local)
+│   │   ├── providers/  # Abstracted LLM adapters (OpenAI, Gemini, Anthropic, Cohere, Bedrock, Azure)
+│   │   ├── rag/        # RAG Engine (embeddings, vector store, document processor, retriever)
 │   │   ├── skills/     # Skill Engine (builtin category subpackages & executor)
 │   │   └── main.py     # FastAPI server entry point
 │   ├── venv/           # Python virtual environment
-│   └── requirements.txt# Backend dependencies (cryptography, jwt, passlib, etc.)
+│   └── requirements.txt# Backend dependencies (cryptography, jwt, passlib, sentence-transformers, chromadb, etc.)
 │
 ├── frontend/           # Next.js Frontend Application
 │   ├── src/
 │   │   ├── app/        # Page routing & global styling
-│   │   ├── components/ # UI panels (auth, chat, settings, skills)
+│   │   ├── components/ # UI panels (auth, chat, settings, skills, knowledge)
 │   │   ├── lib/        # API client fetch handlers & class merges
 │   │   └── store/      # Zustand state managers (app, auth)
 │   └── package.json    # Frontend dependency manifests

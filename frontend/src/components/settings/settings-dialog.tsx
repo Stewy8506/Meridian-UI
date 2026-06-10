@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "../ui/toast";
+import { ProviderGrid } from "./provider-grid";
+import { apiRequest } from "@/lib/api-client";
 
 type Tab = "general" | "providers" | "models" | "appearance" | "shortcuts" | "about";
 
@@ -47,19 +49,33 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   
-  const [showGoogleKey, setShowGoogleKey] = useState(false);
-  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
   const [showTavilyKey, setShowTavilyKey] = useState(false);
   const [showExaKey, setShowExaKey] = useState(false);
 
-  const activeKey = provider === 'google' ? googleApiKey : provider === 'openai' ? openaiApiKey : '';
+  const [providers, setProviders] = useState<any[]>([]);
+
+  // Load providers list on dialog open or when provider settings tab is loaded
+  useEffect(() => {
+    if (!open) return;
+    const fetchProviderList = async () => {
+      try {
+        const data = await apiRequest<any[]>("/api/keys/providers");
+        setProviders(data);
+      } catch (err) {
+        console.error("Failed to load providers list:", err);
+      }
+    };
+    fetchProviderList();
+  }, [open, activeTab]);
 
   useEffect(() => {
-    if (!open || activeTab !== "models") return;
+    if (!open || activeTab !== "models" || !provider) return;
 
-    if ((provider === 'google' || provider === 'openai') && !activeKey) {
+    // Check if the selected provider is configured
+    const selectedProv = providers.find(p => p.id === provider);
+    if (selectedProv && !selectedProv.configured) {
       setAvailableModels([]);
-      setModelError("Please configure your API key under the 'Providers' tab first.");
+      setModelError(`Please configure your API key for ${selectedProv.name} under the 'Providers' tab first.`);
       return;
     }
 
@@ -67,16 +83,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       setLoadingModels(true);
       setModelError(null);
       try {
-        const response = await fetch(`http://localhost:8000/api/chat/models?provider=${provider}`, {
-          headers: {
-            'Authorization': `Bearer ${activeKey || 'not-needed'}`
-          }
-        });
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.detail || "Failed to fetch models");
-        }
-        const data = await response.json();
+        const data = await apiRequest<{ models: string[] }>(`/api/chat/models?provider=${provider}`);
         setAvailableModels(data.models || []);
         
         if (data.models && data.models.length > 0 && !data.models.includes(model)) {
@@ -91,7 +98,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     };
 
     fetchModels();
-  }, [provider, open, activeTab, setModel, activeKey]);
+  }, [provider, open, activeTab, setModel, providers, model]);
 
   // Export chats
   const handleExportChats = () => {
@@ -315,161 +322,68 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 {/* 2. PROVIDERS TAB */}
                 {activeTab === "providers" && (
                   <div className="space-y-6 animate-fade-in">
-                    {/* Active keys config */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* OpenAI card */}
-                      <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Cpu className="w-5 h-5 text-emerald-500" />
-                          <div>
-                            <span className="text-xs md:text-sm font-semibold block leading-tight">OpenAI</span>
-                            <span className="text-[10px] text-muted-foreground leading-none">GPT models</span>
-                          </div>
-                          {openaiApiKey ? (
-                            <span className="ml-auto flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                              <Check className="w-3 h-3" /> Configured
-                            </span>
-                          ) : (
-                            <span className="ml-auto text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                              Not Configured
-                            </span>
-                          )}
+                    <ProviderGrid />
+
+                    {/* Search provider config */}
+                    <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-xs md:text-sm font-semibold block">Search Capability Integration</span>
+                          <span className="text-[10px] text-muted-foreground">Select search engine API key to hook web search to chat</span>
                         </div>
                         
+                        <div className="flex gap-2">
+                          {['tavily', 'exa'].map((engine) => (
+                            <button
+                              key={engine}
+                              onClick={() => setSearchProvider(engine as any)}
+                              className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-colors ${
+                                searchProvider === engine
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background text-muted-foreground border-border hover:border-muted-foreground/40"
+                              }`}
+                            >
+                              {engine}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {searchProvider === "tavily" ? (
                         <div className="relative flex items-center">
                           <input
-                            type={showOpenaiKey ? "text" : "password"}
-                            value={openaiApiKey}
-                            onChange={(e) => setOpenaiApiKey(e.target.value)}
-                            placeholder="sk-proj-..."
+                            type={showTavilyKey ? "text" : "password"}
+                            value={tavilyApiKey}
+                            onChange={(e) => setTavilyApiKey(e.target.value)}
+                            placeholder="Tavily key (tvly-...)"
                             className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                            onClick={() => setShowTavilyKey(!showTavilyKey)}
                             className="absolute right-3 text-muted-foreground hover:text-foreground"
                           >
-                            {showOpenaiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {showTavilyKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
                         </div>
-                      </div>
-
-                      {/* Google Gemini Card */}
-                      <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Cpu className="w-5 h-5 text-blue-500" />
-                          <div>
-                            <span className="text-xs md:text-sm font-semibold block leading-tight">Google Gemini</span>
-                            <span className="text-[10px] text-muted-foreground leading-none">Gemini models</span>
-                          </div>
-                          {googleApiKey ? (
-                            <span className="ml-auto flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                              <Check className="w-3 h-3" /> Configured
-                            </span>
-                          ) : (
-                            <span className="ml-auto text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                              Not Configured
-                            </span>
-                          )}
-                        </div>
-                        
+                      ) : (
                         <div className="relative flex items-center">
                           <input
-                            type={showGoogleKey ? "text" : "password"}
-                            value={googleApiKey}
-                            onChange={(e) => setGoogleApiKey(e.target.value)}
-                            placeholder="AIzaSy..."
+                            type={showExaKey ? "text" : "password"}
+                            value={exaApiKey}
+                            onChange={(e) => setExaApiKey(e.target.value)}
+                            placeholder="Exa key (exa-...)"
                             className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowGoogleKey(!showGoogleKey)}
+                            onClick={() => setShowExaKey(!showExaKey)}
                             className="absolute right-3 text-muted-foreground hover:text-foreground"
                           >
-                            {showGoogleKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {showExaKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
                         </div>
-                      </div>
-
-                      {/* Search provider config */}
-                      <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-4 md:col-span-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-xs md:text-sm font-semibold block">Search Capability Integration</span>
-                            <span className="text-[10px] text-muted-foreground">Select search engine API key to hook web search to chat</span>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            {['tavily', 'exa'].map((engine) => (
-                              <button
-                                key={engine}
-                                onClick={() => setSearchProvider(engine as any)}
-                                className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-colors ${
-                                  searchProvider === engine
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-background text-muted-foreground border-border hover:border-muted-foreground/40"
-                                }`}
-                              >
-                                {engine}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {searchProvider === "tavily" ? (
-                          <div className="relative flex items-center">
-                            <input
-                              type={showTavilyKey ? "text" : "password"}
-                              value={tavilyApiKey}
-                              onChange={(e) => setTavilyApiKey(e.target.value)}
-                              placeholder="Tavily key (tvly-...)"
-                              className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowTavilyKey(!showTavilyKey)}
-                              className="absolute right-3 text-muted-foreground hover:text-foreground"
-                            >
-                              {showTavilyKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="relative flex items-center">
-                            <input
-                              type={showExaKey ? "text" : "password"}
-                              value={exaApiKey}
-                              onChange={(e) => setExaApiKey(e.target.value)}
-                              placeholder="Exa key (exa-...)"
-                              className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowExaKey(!showExaKey)}
-                              className="absolute right-3 text-muted-foreground hover:text-foreground"
-                            >
-                              {showExaKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Pre-installed placeholders (Ollama, Anthropic, DeepSeek, etc.) */}
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Future Cloud Providers (Phase 4 Setup)</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                        {[
-                          "Anthropic (Claude)", "Ollama (Local Host)", "DeepSeek AI", "Groq Inference",
-                          "Together AI", "Mistral AI", "xAI (Grok)", "Perplexity"
-                        ].map((p, idx) => (
-                          <div key={idx} className="p-2.5 rounded-lg border border-border/40 bg-muted/5 flex items-center justify-between text-muted-foreground select-none">
-                            <span>{p}</span>
-                            <span className="text-[9px] bg-muted px-1.5 py-0.5 rounded tracking-wide uppercase font-bold text-muted-foreground/60 scale-90">
-                              v4-prep
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -477,25 +391,20 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 {/* 3. MODELS TAB */}
                 {activeTab === "models" && (
                   <div className="space-y-4 animate-fade-in">
-                    <div className="flex gap-4 items-center">
-                      <div className="flex-1 space-y-2">
-                        <label className="text-xs md:text-sm font-semibold">Active Model Provider</label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['local', 'google', 'openai'].map((p) => (
-                            <button
-                              key={p}
-                              onClick={() => setProvider(p as any)}
-                              className={`py-2 px-3 rounded-lg text-xs md:text-sm font-semibold capitalize border transition-all ${
-                                provider === p
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background text-muted-foreground border-border hover:border-muted-foreground/50'
-                              }`}
-                            >
-                              {p}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <label className="text-xs md:text-sm font-semibold">Active Model Provider</label>
+                      <select
+                        value={provider}
+                        onChange={(e) => setProvider(e.target.value)}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-ring font-semibold capitalize"
+                      >
+                        <option value="" disabled>Select a provider</option>
+                        {providers.map((p) => (
+                          <option key={p.id} value={p.id} className="bg-card text-foreground font-semibold">
+                            {p.name} {p.configured ? "🟢" : "⚪"}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="space-y-2 pt-2">

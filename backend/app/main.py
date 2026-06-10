@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import chat, skills, auth, api_keys, conversations
+from app.api.routes import chat, skills, auth, api_keys, conversations, documents, knowledge
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +22,7 @@ def on_startup():
     # Dynamically import models to register them on Base metadata
     from app.database.models.conversation import Base
     from app.database.models.user import User, UserApiKey, Memory
+    from app.database.models.knowledge import KnowledgeBase, Document
     from app.database.session import engine
     Base.metadata.create_all(bind=engine)
     
@@ -34,6 +35,8 @@ app.include_router(skills.router, prefix="/api/skills", tags=["skills"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_keys.router, prefix="/api/keys", tags=["keys"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["conversations"])
+app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
+app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
 
 @app.get("/health")
 async def health_check():

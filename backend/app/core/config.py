@@ -8,6 +8,28 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
+    GROQ_API_KEY: str | None = None
+    TOGETHER_API_KEY: str | None = None
+    FIREWORKS_API_KEY: str | None = None
+    MISTRAL_API_KEY: str | None = None
+    COHERE_API_KEY: str | None = None
+    DEEPSEEK_API_KEY: str | None = None
+    OPENROUTER_API_KEY: str | None = None
+    PERPLEXITY_API_KEY: str | None = None
+    XAI_API_KEY: str | None = None
+    DEEPINFRA_API_KEY: str | None = None
+    SILICONFLOW_API_KEY: str | None = None
+    CEREBRAS_API_KEY: str | None = None
+    SAMBANOVA_API_KEY: str | None = None
+    LEPTON_API_KEY: str | None = None
+    NOVITA_API_KEY: str | None = None
+    HUGGINGFACE_API_KEY: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    AZURE_OPENAI_API_KEY: str | None = None
+    CLOUDFLARE_API_TOKEN: str | None = None
+    AI21_API_KEY: str | None = None
+    LOCAL_API_KEY: str | None = None
+    OLLAMA_API_KEY: str | None = None
     
     # Search Engine API Keys
     TAVILY_API_KEY: str | None = None

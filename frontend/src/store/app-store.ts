@@ -22,7 +22,7 @@ export interface ChatFolder {
 }
 
 interface AppState {
-  provider: 'local' | 'google' | 'openai';
+  provider: string;
   model: string;
   sidebarOpen: boolean;
   googleApiKey: string;
@@ -33,20 +33,20 @@ interface AppState {
   messages: Message[];
   chats: ChatSession[];
   activeChatId: string | null;
-  currentView: 'chat' | 'marketplace';
+  currentView: 'chat' | 'marketplace' | 'knowledge';
   
   // Phase 1 Features
   theme: 'light' | 'dark' | 'system';
   pinnedChats: string[];
   folders: ChatFolder[];
-
+  
   // Inference Settings
   systemPrompt: string;
   temperature: number;
   topP: number;
   maxTokens: number;
 
-  setProvider: (provider: 'local' | 'google' | 'openai') => void;
+  setProvider: (provider: string) => void;
   setModel: (model: string) => void;
   toggleSidebar: () => void;
   setGoogleApiKey: (key: string) => void;
@@ -56,7 +56,7 @@ interface AppState {
   setExaApiKey: (key: string) => void;
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   clearMessages: () => void;
-  setView: (view: 'chat' | 'marketplace') => void;
+  setView: (view: 'chat' | 'marketplace' | 'knowledge') => void;
   
   // Theme Action
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -77,6 +77,9 @@ interface AppState {
   removeChatFromFolder: (folderId: string, chatId: string) => void;
   reorderChats: (chatIds: string[]) => void;
 
+  activeKbIds: Record<string, string[]>;
+  toggleChatKb: (chatId: string, kbId: string) => void;
+  
   // Inference Actions
   setSystemPrompt: (prompt: string) => void;
   setTemperature: (temp: number) => void;
@@ -297,6 +300,20 @@ export const useAppStore = create<AppState>()(
       setTemperature: (temperature) => set({ temperature }),
       setTopP: (topP) => set({ topP }),
       setMaxTokens: (maxTokens) => set({ maxTokens }),
+      
+      activeKbIds: {},
+      toggleChatKb: (chatId, kbId) => set((state) => {
+        const current = state.activeKbIds[chatId] || [];
+        const next = current.includes(kbId)
+          ? current.filter(id => id !== kbId)
+          : [...current, kbId];
+        return {
+          activeKbIds: {
+            ...state.activeKbIds,
+            [chatId]: next
+          }
+        };
+      }),
     }),
     {
       name: 'ai-workspace-storage',

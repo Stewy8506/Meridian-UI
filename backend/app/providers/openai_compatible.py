@@ -19,6 +19,9 @@ class OpenAICompatibleProvider(BaseProvider):
             "Content-Type": "application/json"
         }
 
+    def _get_url(self, model: str) -> str:
+        return f"{self.base_url}/chat/completions"
+
     async def generate(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> str:
         search_provider = kwargs.pop("search_provider", "tavily")
         tavily_api_key = kwargs.pop("tavily_api_key", None)
@@ -41,7 +44,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 payload["tools"] = tools
                 
             response = await client.post(
-                f"{self.base_url}/chat/completions",
+                self._get_url(clean_model),
                 headers=self._get_headers(),
                 json=payload,
                 timeout=60.0
@@ -127,7 +130,7 @@ class OpenAICompatibleProvider(BaseProvider):
             
             async with client.stream(
                 "POST", 
-                f"{self.base_url}/chat/completions", 
+                self._get_url(clean_model), 
                 headers=self._get_headers(), 
                 json=payload,
                 timeout=60.0

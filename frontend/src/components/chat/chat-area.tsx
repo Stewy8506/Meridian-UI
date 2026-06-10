@@ -14,6 +14,7 @@ import { CommandPalette } from "../ui/command-palette";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { motion, AnimatePresence } from "framer-motion";
 import { SkillIndicator } from "../skills/skill-indicator";
+import { RagToggle } from "../knowledge/rag-toggle";
 
 export function ChatArea() {
   const { 
@@ -34,7 +35,8 @@ export function ChatArea() {
     systemPrompt,
     temperature,
     topP,
-    maxTokens
+    maxTokens,
+    activeKbIds
   } = useAppStore();
   
   const [input, setInput] = useState("");
@@ -190,7 +192,8 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
             exa_api_key: exaApiKey || null,
             temperature,
             top_p: topP,
-            max_tokens: maxTokens
+            max_tokens: maxTokens,
+            knowledge_base_ids: activeChatId ? activeKbIds[activeChatId] || [] : []
           }),
           signal: controller.signal
         });
@@ -467,6 +470,10 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
             onSubmit={handleSubmit} 
             className="relative flex items-end gap-2 bg-card/40 border border-border/80 rounded-2xl p-2 shadow-md focus-within:ring-1 focus-within:ring-ring transition-shadow backdrop-blur-sm"
           >
+            <div className="pl-1 pb-1 shrink-0">
+              <RagToggle />
+            </div>
+            
             <textarea
               ref={inputRef}
               value={input}
