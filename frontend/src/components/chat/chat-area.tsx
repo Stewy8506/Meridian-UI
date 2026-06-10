@@ -337,7 +337,8 @@ export function ChatArea() {
             temperature,
             top_p: topP,
             max_tokens: maxTokens,
-            knowledge_base_ids: activeChatId ? activeKbIds[activeChatId] || [] : []
+            knowledge_base_ids: activeChatId ? activeKbIds[activeChatId] || [] : [],
+            conversation_id: activeChatId || null
           }),
           signal: controller.signal
         });

@@ -312,6 +312,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 
             tool_calls_map = {}
             is_tool_call = False
+            accumulated_content = []
             canvas_states = {} # tool_idx -> {"started": bool, "last_len": int}
             
             try:
@@ -387,10 +388,11 @@ class OpenAICompatibleProvider(BaseProvider):
                                                     yield delta_content
                                                     state["last_len"] = curr_len
                                 
-                                # If not a tool call, yield content if any
-                                if not is_tool_call:
-                                    content = delta.get("content")
-                                    if content:
+                                # Yield and accumulate content if any
+                                content = delta.get("content")
+                                if content:
+                                    accumulated_content.append(content)
+                                    if not is_tool_call:
                                         yield content
                             except json.JSONDecodeError:
                                 continue
@@ -425,10 +427,11 @@ class OpenAICompatibleProvider(BaseProvider):
             if is_tool_call and tool_calls_map:
                 tool_calls = [v for k, v in sorted(tool_calls_map.items())]
                 
-                # Append assistant message with tool calls
+                assistant_content = "".join(accumulated_content) if accumulated_content else None
+                # Append assistant message with tool calls and accumulated content
                 messages.append({
                     "role": "assistant",
-                    "content": None,
+                    "content": assistant_content,
                     "tool_calls": tool_calls
                 })
                 
