@@ -43,6 +43,7 @@ interface AppState {
   
   // Inference Settings
   systemPrompt: string;
+  activePersona: any | null;
   temperature: number;
   topP: number;
   maxTokens: number;
@@ -131,6 +132,7 @@ interface AppState {
   
   // Inference Actions
   setSystemPrompt: (prompt: string) => void;
+  setActivePersona: (persona: any | null) => void;
   setTemperature: (temp: number) => void;
   setTopP: (val: number) => void;
   setMaxTokens: (val: number) => void;
@@ -161,6 +163,7 @@ export const useAppStore = create<AppState>()(
       
       // Inference Settings Defaults
       systemPrompt: 'You are a helpful, precise, and sophisticated AI assistant. Format your answers beautifully in Markdown.',
+      activePersona: null,
       temperature: 0.7,
       topP: 0.9,
       maxTokens: 2048,
@@ -418,6 +421,7 @@ export const useAppStore = create<AppState>()(
       }),
 
       setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
+      setActivePersona: (activePersona) => set({ activePersona }),
       setTemperature: (temperature) => set({ temperature }),
       setTopP: (topP) => set({ topP }),
       setMaxTokens: (maxTokens) => set({ maxTokens }),

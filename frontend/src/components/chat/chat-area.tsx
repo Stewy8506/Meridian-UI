@@ -50,7 +50,9 @@ export function ChatArea() {
     drafts,
     setDraft,
     isStreaming,
-    setIsStreaming
+    setIsStreaming,
+    activePersona,
+    setActivePersona
   } = useAppStore();
   
   const input = (activeChatId && drafts[activeChatId]) || "";
@@ -111,7 +113,6 @@ export function ChatArea() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [showScrollFAB, setShowScrollFAB] = useState(false);
   const [personaManagerOpen, setPersonaManagerOpen] = useState(false);
-  const [activePersona, setActivePersona] = useState<any>(null);
   const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,17 @@ export function ChatArea() {
     setMounted(true);
     hydrateChats();
   }, [hydrateChats]);
+
+  // Sync default prompt and temperature if no persona is active
+  useEffect(() => {
+    if (mounted && !activePersona) {
+      const defaultPrompt = 'You are a helpful, precise, and sophisticated AI assistant. Format your answers beautifully in Markdown.';
+      if (systemPrompt !== defaultPrompt) {
+        useAppStore.getState().setSystemPrompt(defaultPrompt);
+        useAppStore.getState().setTemperature(0.7);
+      }
+    }
+  }, [mounted, activePersona, systemPrompt]);
 
   // Auto-resize textarea height as input content changes
   useEffect(() => {
@@ -662,7 +674,7 @@ export function ChatArea() {
               title="Change AI Persona"
             >
               <User className="w-3.5 h-3.5 text-neutral-500" strokeWidth={1.5} />
-              <span>{activePersona ? activePersona.name : "Select Persona"}</span>
+              <span>{activePersona ? activePersona.name : "Default Assistant"}</span>
             </button>
 
             <button

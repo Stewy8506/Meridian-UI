@@ -13,6 +13,14 @@ router = APIRouter()
 # Default built-in presets
 BUILTIN_PRESETS = [
     {
+        "name": "Default Assistant",
+        "avatar": "sparkles",
+        "system_prompt": "You are a helpful, precise, and sophisticated AI assistant. Format your answers beautifully in Markdown.",
+        "default_model": "",
+        "temperature": 0.7,
+        "greeting": "Hello! How can I help you today?"
+    },
+    {
         "name": "Code Reviewer",
         "avatar": "code",
         "system_prompt": "You are a senior staff software engineer and code reviewer. Analyze the code provided for security issues, runtime complexity, code cleanliness, and architectural soundness. Provide constructive, actionable feedback and suggest optimized refactored blocks.",
@@ -79,9 +87,12 @@ class PersonaUpdate(BaseModel):
     greeting: Optional[str] = None
 
 def seed_presets_if_empty(db: Session):
-    count = db.query(Persona).filter(Persona.is_system_preset == True).count()
-    if count == 0:
-        for p in BUILTIN_PRESETS:
+    for p in BUILTIN_PRESETS:
+        existing = db.query(Persona).filter(
+            Persona.is_system_preset == True,
+            Persona.name == p["name"]
+        ).first()
+        if not existing:
             db_p = Persona(
                 id=str(uuid.uuid4()),
                 name=p["name"],
@@ -93,7 +104,7 @@ def seed_presets_if_empty(db: Session):
                 is_system_preset=True
             )
             db.add(db_p)
-        db.commit()
+    db.commit()
 
 @router.get("")
 async def get_personas(
