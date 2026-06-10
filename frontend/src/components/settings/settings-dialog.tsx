@@ -22,6 +22,39 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   
   const [activeTab, setActiveTab] = useState<Tab>("general");
   
+  const [providers, setProviders] = useState<any[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+
+  // Fetch available providers
+  useEffect(() => {
+    if (!open) return;
+    const fetchProviders = async () => {
+      try {
+        const data = await apiRequest<any[]>("/api/keys/providers");
+        const active = data.filter(p => p.configured || p.id === "local" || p.id === "ollama");
+        setProviders(active);
+      } catch (err) {
+        console.error("Failed to load providers:", err);
+      }
+    };
+    fetchProviders();
+  }, [open]);
+
+  // Fetch models whenever active provider changes
+  useEffect(() => {
+    if (!open || !store.provider) return;
+    const fetchModels = async () => {
+      try {
+        const res = await apiRequest<{ models: string[] }>(`/api/chat/models?provider=${store.provider}`);
+        setModels(res.models || []);
+      } catch (err) {
+        console.error(`Failed to fetch models for ${store.provider}:`, err);
+        setModels([]);
+      }
+    };
+    fetchModels();
+  }, [open, store.provider]);
+  
   // RAG settings states (fetched from admin if admin, or kept in local states)
   const [ragProvider, setRagProvider] = useState("local");
   const [ragChunkSize, setRagChunkSize] = useState(512);
@@ -426,6 +459,42 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 {/* GENERAL & UI */}
                 {activeTab === "general" && (
                   <div className="space-y-6 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-300">Active AI Provider</label>
+                        <select
+                          value={store.provider}
+                          onChange={(e) => store.setProvider(e.target.value)}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-md px-3 py-2 text-xs focus:outline-none text-neutral-300 cursor-pointer"
+                        >
+                          {providers.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-300">Active AI Model</label>
+                        <select
+                          value={store.model}
+                          onChange={(e) => store.setModel(e.target.value)}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-md px-3 py-2 text-xs focus:outline-none text-neutral-300 cursor-pointer"
+                        >
+                          {models.length === 0 ? (
+                            <option value={store.model}>{store.model}</option>
+                          ) : (
+                            models.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <label className="text-xs font-medium text-neutral-300">Base System Prompt</label>

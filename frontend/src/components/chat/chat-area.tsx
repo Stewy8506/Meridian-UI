@@ -17,7 +17,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { motion, AnimatePresence } from "framer-motion";
 import { SkillIndicator } from "../skills/skill-indicator";
 import { RagToggle } from "../knowledge/rag-toggle";
-import { getBaseUrl } from "@/lib/api-client";
+import { getBaseUrl, apiRequest } from "@/lib/api-client";
 import { PersonaManager } from "../personas/persona-manager";
 import { CanvasPanel } from "../canvas/canvas-panel";
 import { PromptLibrary } from "../prompts/prompt-library";
@@ -27,7 +27,9 @@ export function ChatArea() {
     sidebarOpen, 
     toggleSidebar, 
     provider, 
+    setProvider,
     model, 
+    setModel,
     messages, 
     setMessages, 
     googleApiKey, 
@@ -53,6 +55,48 @@ export function ChatArea() {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [mounted, setMounted] = useState(false);
+
+  const [providers, setProviders] = useState<any[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  // Fetch available providers
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const data = await apiRequest<any[]>("/api/keys/providers");
+        const active = data.filter(p => p.configured || p.id === "local" || p.id === "ollama");
+        setProviders(active);
+      } catch (err) {
+        console.error("Failed to load providers:", err);
+      }
+    };
+    fetchProviders();
+  }, []);
+
+  // Fetch models whenever provider changes
+  useEffect(() => {
+    if (!provider) return;
+    const fetchModels = async () => {
+      setLoadingModels(true);
+      try {
+        const res = await apiRequest<{ models: string[] }>(`/api/chat/models?provider=${provider}`);
+        const list = res.models || [];
+        setModels(list);
+        
+        // If current model is empty or not in the list, choose the first model in list
+        if (list.length > 0 && (!model || !list.includes(model))) {
+          setModel(list[0]);
+        }
+      } catch (err) {
+        console.error(`Failed to fetch models for ${provider}:`, err);
+        setModels([]);
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+    fetchModels();
+  }, [provider]);
   
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [showScrollFAB, setShowScrollFAB] = useState(false);
@@ -412,7 +456,44 @@ export function ChatArea() {
               <PanelLeft className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
             </button>
           )}
-          <span className="text-xs text-muted-foreground font-medium tracking-wide">{model}</span>
+          
+          <div className="flex items-center gap-1 bg-muted/30 border border-border/80 px-2 py-0.5 rounded-lg">
+            <select
+              value={provider}
+              onChange={(e) => setProvider(e.target.value)}
+              className="bg-transparent border-none text-muted-foreground hover:text-foreground text-xs font-semibold focus:ring-0 outline-none cursor-pointer pr-6 py-0.5 select-none"
+            >
+              {providers.map((p) => (
+                <option key={p.id} value={p.id} className="bg-popover text-foreground">
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            
+            <span className="text-border/80 text-xs select-none">|</span>
+            
+            {loadingModels ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" strokeWidth={1.5} />
+            ) : (
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="bg-transparent border-none text-muted-foreground hover:text-foreground text-xs font-semibold focus:ring-0 outline-none cursor-pointer pr-6 py-0.5 select-none max-w-[160px] truncate"
+              >
+                {models.length === 0 ? (
+                  <option value={model} className="bg-popover text-foreground">
+                    {model}
+                  </option>
+                ) : (
+                  models.map((m) => (
+                    <option key={m} value={m} className="bg-popover text-foreground">
+                      {m}
+                    </option>
+                  ))
+                )}
+              </select>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
