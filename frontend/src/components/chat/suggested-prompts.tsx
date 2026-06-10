@@ -42,7 +42,14 @@ export function SuggestedPrompts({ onSelectPrompt }: { onSelectPrompt: (prompt: 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.04 }}
             onClick={() => onSelectPrompt(item.prompt)}
-            className="text-left p-3 rounded-lg border border-border hover:border-foreground/15 hover:bg-accent/50 cursor-pointer select-none transition-colors group"
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+              e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+            }}
+            className="spotlight-border text-left p-3 rounded-lg border border-border hover:border-foreground/15 hover:bg-accent/50 cursor-pointer select-none transition-colors group"
           >
             <h3 className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
               {item.title}

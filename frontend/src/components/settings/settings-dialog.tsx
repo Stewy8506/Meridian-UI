@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "../ui/toast";
 import { ProviderGrid } from "./provider-grid";
 import { apiRequest } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 type Tab = "general" | "providers" | "models" | "appearance" | "shortcuts" | "about";
 
@@ -168,25 +169,36 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 <span className="font-semibold text-sm">Settings</span>
               </div>
               
-              {tabs.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 text-left ${
-                    activeTab === item.id
-                      ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
+              {tabs.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={cn(
+                      "relative px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 text-left select-none cursor-pointer",
+                      isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSettingsTab"
+                        className="absolute inset-0 bg-accent rounded-md z-0"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{item.label}</span>
+                  </button>
+                );
+              })}
               
               <button
                 onClick={onClose}
                 className="md:hidden ml-auto p-1.5 hover:bg-accent rounded-md text-muted-foreground"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -195,7 +207,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
               <div className="hidden md:flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
                 <h3 className="font-medium text-sm capitalize">{activeTab}</h3>
                 <button onClick={onClose} className="p-1 hover:bg-accent rounded-md transition-colors text-muted-foreground hover:text-foreground">
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
 
@@ -280,12 +292,12 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                           onClick={handleExportChats}
                           className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-accent rounded-md text-xs font-medium text-foreground transition-colors"
                         >
-                          <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                          <Download className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
                           Export
                         </button>
                         
                         <label className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-accent rounded-md text-xs font-medium text-foreground cursor-pointer transition-colors">
-                          <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                          <Upload className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
                           Import
                           <input
                             type="file"
@@ -342,7 +354,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             onClick={() => setShowTavilyKey(!showTavilyKey)}
                             className="absolute right-2 text-muted-foreground hover:text-foreground"
                           >
-                            {showTavilyKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            {showTavilyKey ? <EyeOff className="w-3 h-3" strokeWidth={1.5} /> : <Eye className="w-3 h-3" strokeWidth={1.5} />}
                           </button>
                         </div>
                       ) : (
@@ -359,7 +371,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             onClick={() => setShowExaKey(!showExaKey)}
                             className="absolute right-2 text-muted-foreground hover:text-foreground"
                           >
-                            {showExaKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            {showExaKey ? <EyeOff className="w-3 h-3" strokeWidth={1.5} /> : <Eye className="w-3 h-3" strokeWidth={1.5} />}
                           </button>
                         </div>
                       )}
@@ -390,7 +402,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                       <label className="text-xs font-medium">Model</label>
                       {loadingModels ? (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground p-2">
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} />
                           <span>Loading models...</span>
                         </div>
                       ) : modelError || availableModels.length === 0 ? (
@@ -403,7 +415,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             placeholder="e.g. gemini-2.5-pro"
                           />
                           <p className="text-[10px] text-muted-foreground bg-muted p-2 rounded-md flex gap-2 items-start leading-normal mt-1">
-                            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" strokeWidth={1.5} />
                             <span>
                               Auto-detection unavailable. Enter the model ID manually.
                             </span>
@@ -464,7 +476,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                           <span className="text-muted-foreground">{item.desc}</span>
                           <div className="flex gap-1">
                             {item.keys.map((k, i) => (
-                              <kbd key={i} className="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px] font-[family-name:var(--font-geist-mono)] text-muted-foreground">
+                              <kbd key={i} className="kbd-premium">
                                 {k}
                               </kbd>
                             ))}

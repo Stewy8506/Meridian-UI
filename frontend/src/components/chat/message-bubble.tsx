@@ -14,6 +14,7 @@ import { CodeBlock } from "./code-block";
 import { toast } from "../ui/toast";
 import { cn } from "@/lib/utils";
 import { SkillResult } from "./skill-result";
+import { TTSPlayer } from "./tts-player";
 
 interface ContentSegment {
   type: 'thought' | 'skill' | 'text';
@@ -88,13 +89,13 @@ function ThoughtBlock({ content, isStreaming }: { content: string; isStreaming?:
         className="w-full flex items-center justify-between px-3 py-2 bg-muted/50 hover:bg-muted text-xs font-medium text-muted-foreground transition-colors select-none"
       >
         <div className="flex items-center gap-2">
-          <Brain className={cn("w-3.5 h-3.5 shrink-0", isStreaming && "animate-pulse")} />
+          <Brain className={cn("w-3.5 h-3.5 shrink-0", isStreaming && "animate-pulse")} strokeWidth={1.5} />
           <span>{isStreaming ? "Thinking..." : "Thought process"}</span>
           {isStreaming && (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} />
           )}
         </div>
-        {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+        {isOpen ? <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} /> : <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />}
       </button>
       
       <AnimatePresence initial={false}>
@@ -103,7 +104,7 @@ function ThoughtBlock({ content, isStreaming }: { content: string; isStreaming?:
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-border"
+            className="border-t border-border overflow-hidden"
           >
             <div className="px-3 py-2.5 text-xs text-muted-foreground font-[family-name:var(--font-geist-mono)] whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
               {content}
@@ -216,7 +217,7 @@ export function MessageBubble({
                     <ThoughtBlock 
                       key={idx} 
                       content={seg.content} 
-                      isStreaming={seg.isStreaming} 
+                      isStreaming={seg.isStreaming && isStreaming} 
                     />
                   );
                 } else if (seg.type === 'skill') {
@@ -262,7 +263,7 @@ export function MessageBubble({
                 className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 title="Copy"
               >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
               </button>
 
               <button
@@ -270,8 +271,10 @@ export function MessageBubble({
                 className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 title="Regenerate"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
+
+              <TTSPlayer text={message.content.replace(/<thought>[\s\S]*?<\/thought>/g, "").replace(/<skill_result[\s\S]*?<\/skill_result>/g, "").trim()} />
 
               <div className="h-3.5 w-px bg-border mx-0.5" />
               
@@ -285,7 +288,7 @@ export function MessageBubble({
                 )}
                 title="Good response"
               >
-                <ThumbsUp className="w-3.5 h-3.5" />
+                <ThumbsUp className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => onReaction(index, message.reactions === "dislike" ? null : "dislike")}
@@ -297,7 +300,7 @@ export function MessageBubble({
                 )}
                 title="Bad response"
               >
-                <ThumbsDown className="w-3.5 h-3.5" />
+                <ThumbsDown className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
             </div>
           )}
@@ -312,14 +315,14 @@ export function MessageBubble({
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
             title="Copy"
           >
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
           </button>
           <button
             onClick={() => setIsEditing(true)}
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
             title="Edit"
           >
-            <Edit2 className="w-3.5 h-3.5" />
+            <Edit2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
       )}

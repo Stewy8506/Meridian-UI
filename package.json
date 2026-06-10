@@ -4,6 +4,6 @@
   "description": "Root orchestrator for AI Chat Workspace application",
   "private": true,
   "scripts": {
-    "dev:all": "node run-dev.js"
+    ".ai": "node run-dev.js"
   }
 }

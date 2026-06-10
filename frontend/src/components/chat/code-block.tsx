@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Copy, Check, Play, ChevronDown, ChevronUp, AlignLeft } from "lucide-react";
 import { toast } from "../ui/toast";
+import { CodeOutput } from "./code-output";
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -83,19 +84,7 @@ export function CodeBlock({ children }: CodeBlockProps) {
             className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
             title="Copy"
           >
-            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           </button>
-
-          {["python", "javascript", "js", "ts", "typescript", "bash", "sh"].includes(language.toLowerCase()) && (
-            <button
-              onClick={handleRunCode}
-              disabled={runLoading}
-              className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors disabled:opacity-50 shrink-0"
-              title="Run"
-            >
-              <Play className={`w-3 h-3 ${runLoading ? 'animate-spin' : ''}`} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -125,6 +114,12 @@ export function CodeBlock({ children }: CodeBlockProps) {
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-card to-transparent pointer-events-none" />
         )}
       </div>
+
+      {language === "python" && (
+        <div className="px-3 pb-3">
+          <CodeOutput code={rawCode} language={language} />
+        </div>
+      )}
 
       {/* Collapse toggle */}
       {isLongCode && (

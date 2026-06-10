@@ -119,7 +119,7 @@ export function ProviderGrid() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-        <Loader2 className="w-5 h-5 animate-spin" />
+        <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.5} />
         <span className="text-xs">Loading providers...</span>
       </div>
     );
@@ -130,7 +130,7 @@ export function ProviderGrid() {
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
         <div className="relative w-full sm:w-56">
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground/50" />
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground/50" strokeWidth={1.5} />
           <input
             type="text"
             placeholder="Search providers..."
@@ -169,7 +169,14 @@ export function ProviderGrid() {
           return (
             <div
               key={prov.id}
-              className={`flex flex-col rounded-lg border transition-colors ${
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+              }}
+              className={`spotlight-border flex flex-col rounded-lg border transition-colors ${
                 isExpanded ? "border-foreground/15 md:col-span-2" : "border-border hover:border-foreground/10"
               }`}
             >
@@ -188,7 +195,16 @@ export function ProviderGrid() {
                   </div>
                 </div>
                 
-                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${prov.configured ? "bg-foreground/60" : "bg-border"}`} />
+                <div className="relative w-1.5 h-1.5 shrink-0 flex items-center justify-center">
+                  {prov.configured ? (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground/35 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground/75" />
+                    </>
+                  ) : (
+                    <span className="inline-flex rounded-full h-1.5 w-1.5 bg-border" />
+                  )}
+                </div>
               </div>
 
               {/* Expand drawer */}
@@ -229,7 +245,7 @@ export function ProviderGrid() {
                               onClick={() => setShowKeys(prev => ({ ...prev, [prov.id]: !prev[prov.id] }))}
                               className="absolute right-2 text-muted-foreground hover:text-foreground"
                             >
-                              {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              {showKey ? <EyeOff className="w-3 h-3" strokeWidth={1.5} /> : <Eye className="w-3 h-3" strokeWidth={1.5} />}
                             </button>
                           </div>
                         </div>
@@ -242,7 +258,7 @@ export function ProviderGrid() {
                             disabled={isDeleting}
                             className="mr-auto flex items-center gap-1 px-2 py-1 text-destructive hover:bg-destructive/10 rounded-md font-medium transition-colors disabled:opacity-50"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                             Remove
                           </button>
                         )}
@@ -252,7 +268,7 @@ export function ProviderGrid() {
                           disabled={isTesting}
                           className="flex items-center gap-1 px-2.5 py-1 border border-border hover:bg-accent rounded-md font-medium transition-colors disabled:opacity-50"
                         >
-                          {isTesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                          {isTesting ? <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} /> : <RefreshCw className="w-3 h-3" strokeWidth={1.5} />}
                           Test
                         </button>
 
@@ -262,7 +278,7 @@ export function ProviderGrid() {
                             disabled={isSaving}
                             className="flex items-center gap-1 px-2.5 py-1 bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium transition-colors disabled:opacity-50"
                           >
-                            {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                            {isSaving ? <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} /> : <Save className="w-3 h-3" strokeWidth={1.5} />}
                             Save
                           </button>
                         )}

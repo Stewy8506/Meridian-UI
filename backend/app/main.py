@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import chat, skills, auth, api_keys, conversations, documents, knowledge
+from app.api.routes import chat, skills, auth, api_keys, conversations, documents, knowledge, files, images, execute, analytics
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,6 +28,7 @@ def on_startup():
     from app.database.models.conversation import Base
     from app.database.models.user import User, UserApiKey, Memory
     from app.database.models.knowledge import KnowledgeBase, Document
+    from app.database.models.usage import UsageRecord
     from app.database.session import engine
     Base.metadata.create_all(bind=engine)
     
@@ -42,6 +43,10 @@ app.include_router(api_keys.router, prefix="/api/keys", tags=["keys"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["conversations"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])
+app.include_router(images.router, prefix="/api/images", tags=["images"])
+app.include_router(execute.router, prefix="/api/execute", tags=["execute"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 
 @app.get("/health")
 async def health_check():

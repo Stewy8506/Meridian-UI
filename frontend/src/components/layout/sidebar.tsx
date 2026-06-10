@@ -136,7 +136,7 @@ export function Sidebar() {
             )}
             title={pinned ? "Unpin" : "Pin"}
           >
-            <Pin className="w-3 h-3" />
+            <Pin className="w-3 h-3" strokeWidth={1.5} />
           </button>
           
           <button
@@ -147,7 +147,7 @@ export function Sidebar() {
             className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="More"
           >
-            <MoreVertical className="w-3 h-3" />
+            <MoreVertical className="w-3 h-3" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -187,7 +187,7 @@ export function Sidebar() {
                       }}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent text-foreground transition-colors"
                     >
-                      {inFolder ? <FolderMinus className="w-3.5 h-3.5 text-muted-foreground" /> : <Folder className="w-3.5 h-3.5 text-muted-foreground" />}
+                      {inFolder ? <FolderMinus className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} /> : <Folder className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />}
                       <span className="truncate">{inFolder ? "Remove from" : "Move to"} {f.name}</span>
                     </button>
                   );
@@ -203,7 +203,7 @@ export function Sidebar() {
                   }}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-destructive/10 text-destructive transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                   <span>Delete</span>
                 </button>
               </motion.div>
@@ -238,7 +238,7 @@ export function Sidebar() {
             onClick={toggleSidebar} 
             className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground rounded-md transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -249,20 +249,30 @@ export function Sidebar() {
               { id: 'chat', label: 'Chat' },
               { id: 'marketplace', label: 'Skills' },
               { id: 'knowledge', label: 'Files' },
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setView(tab.id)}
-                className={cn(
-                  "flex-1 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors",
-                  currentView === tab.id
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+            ] as const).map((tab) => {
+              const isActive = currentView === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setView(tab.id)}
+                  className={cn(
+                    "relative flex-1 py-1.5 text-xs font-medium cursor-pointer transition-colors text-center select-none",
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeViewTab"
+                      className="absolute inset-0 bg-accent rounded-md z-0"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -272,12 +282,12 @@ export function Sidebar() {
             onClick={() => { setView('chat'); createChat(); }}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-border hover:border-foreground/30 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground transition-all select-none cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
             New conversation
           </button>
 
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 w-3.5 h-3.5 text-muted-foreground/50" />
+            <Search className="absolute left-2.5 w-3.5 h-3.5 text-muted-foreground/50" strokeWidth={1.5} />
             <input
               type="text"
               placeholder="Search..."
@@ -290,7 +300,7 @@ export function Sidebar() {
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2 p-0.5 hover:bg-accent rounded"
               >
-                <X className="w-3 h-3 text-muted-foreground" />
+                <X className="w-3 h-3 text-muted-foreground" strokeWidth={1.5} />
               </button>
             )}
           </div>
@@ -308,7 +318,7 @@ export function Sidebar() {
                 className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
                 title="New folder"
               >
-                <FolderPlus className="w-3 h-3" />
+                <FolderPlus className="w-3 h-3" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -351,7 +361,7 @@ export function Sidebar() {
                       className="flex items-center justify-between px-3 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer text-xs text-foreground/80 rounded-md"
                     >
                       <div className="flex items-center gap-1.5 truncate min-w-0">
-                        {isExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                        {isExpanded ? <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={1.5} /> : <ChevronRight className="w-3 h-3 shrink-0" strokeWidth={1.5} />}
                         <span className="truncate font-medium">{folder.name}</span>
                         <span className="text-[10px] text-muted-foreground">{folderChats.length}</span>
                       </div>
@@ -365,7 +375,7 @@ export function Sidebar() {
                         className="p-0.5 hover:bg-accent text-muted-foreground hover:text-destructive rounded transition-colors opacity-0 group-hover:opacity-100"
                         title="Delete folder"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                       </button>
                     </div>
 
@@ -375,7 +385,7 @@ export function Sidebar() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="ml-3 border-l border-border pl-1 pb-1 space-y-0.5"
+                          className="ml-3 border-l border-border pl-1 pb-1 space-y-0.5 overflow-hidden"
                         >
                           {folderChats.length === 0 ? (
                             <div className="text-[10px] text-muted-foreground/50 italic px-3 py-1.5">
@@ -459,7 +469,7 @@ export function Sidebar() {
                   className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
                   title="Sign out"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>
               )}
               <ThemeToggle />
@@ -470,7 +480,7 @@ export function Sidebar() {
             onClick={() => setSettingsOpen(true)} 
             className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-left font-medium cursor-pointer"
           >
-            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <Settings className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
             Settings
           </button>
         </div>

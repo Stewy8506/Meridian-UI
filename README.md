@@ -33,6 +33,12 @@ A marketplace UI lets you browse, toggle, and live-test skills with custom JSON 
 ### RAG & Knowledge Collections
 Upload PDFs, Word docs, markdown, CSV, or JSON files into named knowledge collections. Documents are chunked with sentence-aligned overlap, embedded with `all-MiniLM-L6-v2` (with OpenAI/Gemini embedding fallbacks), and stored in a SQLite-backed vector store. At query time, relevant chunks are retrieved via cosine similarity and prepended to the prompt. Select which collections to augment per conversation.
 
+### Multimodal & Code Execution
+Upload images and documents directly in chat, interact via browser-native Speech-to-Text (Voice Input), and listen to responses with Text-to-Speech (TTS). The chat includes an embedded local Python sandbox using `subprocess` that lets you execute Python code blocks instantly and view `stdout`/`stderr` inline.
+
+### Analytics & Token Dashboard
+Monitor your token usage, latency, and estimated costs over time. A beautiful Recharts-powered dashboard at `/analytics` visualizes your top models and provider cost distributions to help you track spending and usage patterns.
+
 ### Auth & Persistence
 Multi-user JWT auth with bcrypt password hashing. Provider API keys are encrypted at rest using Fernet (AES-128-CBC). Conversations persist with per-user isolation, branch/fork support, pinning, tags, and OpenWebUI history import compatibility.
 
@@ -53,11 +59,12 @@ Multi-user JWT auth with bcrypt password hashing. Provider API keys are encrypte
 AI Workspace/
 ├── backend/                  # FastAPI ASGI service
 │   └── app/
-│       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, documents, knowledge)
+│       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, documents, knowledge, files, execute, analytics, images)
 │       ├── core/             # JWT config, security utilities
 │       ├── database/         # SQLAlchemy models (User, Conversation, Message, Memory, UserApiKey)
 │       ├── providers/        # LLM adapters (OpenAI-compat + custom: Anthropic, Cohere, Bedrock, Azure)
 │       ├── rag/              # Document processor, embeddings, vector store, retriever
+│       ├── sandbox/          # Python code execution sandbox
 │       ├── skills/           # Skill registry, router, executor, built-in skill packages
 │       └── main.py
 │
@@ -100,8 +107,9 @@ EXA_API_KEY=...          # optional, alternative search engine
 ### 2. Start servers
 
 ```bash
-npm run dev:all
+.\.ai
 ```
+*(Or `npm run .ai` on other operating systems)*
 
 | Service | URL |
 |---|---|

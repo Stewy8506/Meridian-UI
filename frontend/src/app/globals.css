@@ -216,3 +216,85 @@
 @keyframes cursorBlink {
   to { visibility: hidden; }
 }
+
+/* ─── Custom Premium UI Tweaks ─── */
+
+/* Selection Highlight */
+::selection {
+  background-color: var(--foreground);
+  color: var(--background);
+}
+
+/* Mouse Spotlight Card Hover Effect */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    800px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(255, 255, 255, 0.03),
+    transparent 40%
+  );
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+/* Mouse Spotlight Border Hover Effect */
+.spotlight-border {
+  position: relative;
+}
+.spotlight-border::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: radial-gradient(
+    300px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(255, 255, 255, 0.1),
+    transparent 50%
+  );
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+.spotlight-border:hover::after {
+  opacity: 1;
+}
+
+/* Subtle SVG Noise Grain overlay */
+.noise-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.012;
+  pointer-events: none;
+}
+
+/* Typographic shortcut keycaps (kbd) */
+.kbd-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  height: 18px;
+  min-width: 18px;
+  font-size: 9px;
+  font-family: var(--font-geist-mono), monospace;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.dark .kbd-premium {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}

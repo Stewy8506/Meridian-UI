@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "../ui/toast";
 import { MessageBubble } from "./message-bubble";
 import { SuggestedPrompts } from "./suggested-prompts";
+import { FileUpload, FileAttachmentList, AttachedFile } from "./file-upload";
+import { VoiceInput } from "./voice-input";
 import { CommandPalette } from "../ui/command-palette";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,6 +43,7 @@ export function ChatArea() {
   } = useAppStore();
   
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -58,6 +61,50 @@ export function ChatArea() {
     setMounted(true);
     hydrateChats();
   }, [hydrateChats]);
+
+  const handleFilesSelected = async (files: File[]) => {
+    const newAttachments: AttachedFile[] = files.map(file => ({
+      id: Math.random().toString(36).substring(7),
+      file,
+      isUploading: true
+    }));
+    
+    setAttachments(prev => [...prev, ...newAttachments]);
+    
+    for (const attachment of newAttachments) {
+      try {
+        const formData = new FormData();
+        formData.append("file", attachment.file);
+        
+        const response = await fetch(`${getBaseUrl()}/api/files/upload`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("auth-token") || 'not-needed'}`
+          }
+        });
+        
+        if (!response.ok) throw new Error("Upload failed");
+        const data = await response.json();
+        
+        setAttachments(prev => prev.map(a => 
+          a.id === attachment.id 
+            ? { ...a, isUploading: false, previewUrl: data.file.url }
+            : a
+        ));
+      } catch (err) {
+        setAttachments(prev => prev.map(a => 
+          a.id === attachment.id 
+            ? { ...a, isUploading: false, error: "Upload failed" }
+            : a
+        ));
+      }
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -267,6 +314,14 @@ export function ChatArea() {
     }
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLFormElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isStreaming) return;
@@ -277,6 +332,7 @@ export function ChatArea() {
     
     setMessages(nextMessages);
     setInput("");
+    setAttachments([]);
     
     await triggerStream(nextMessages);
   };
@@ -317,7 +373,7 @@ export function ChatArea() {
   if (!mounted) {
     return (
       <div className="flex-1 flex flex-col h-full bg-background items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" strokeWidth={1.5} />
       </div>
     );
   }
@@ -333,7 +389,7 @@ export function ChatArea() {
               onClick={toggleSidebar} 
               className="p-1 hover:bg-accent rounded-md transition-colors"
             >
-              <PanelLeft className="w-4 h-4 text-muted-foreground" />
+              <PanelLeft className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
             </button>
           )}
           <span className="text-xs text-muted-foreground font-medium tracking-wide">{model}</span>
@@ -343,9 +399,9 @@ export function ChatArea() {
           <SkillIndicator />
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors cursor-pointer"
           >
-            <kbd className="text-[10px] font-[family-name:var(--font-geist-mono)] text-muted-foreground">⌘K</kbd>
+            <kbd className="kbd-premium">⌘K</kbd>
           </button>
         </div>
       </header>
@@ -353,7 +409,7 @@ export function ChatArea() {
       {/* Retry banner */}
       {isRetrying && (
         <div className="bg-muted border-b border-border text-muted-foreground text-xs px-4 py-2 flex items-center gap-2 shrink-0 select-none">
-          <Loader2 className="w-3 h-3 animate-spin" />
+          <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} />
           <span>Retrying (attempt {retryCount})...</span>
         </div>
       )}
@@ -373,12 +429,22 @@ export function ChatArea() {
               className="w-full max-w-xl text-center space-y-8 select-none"
             >
               <div className="space-y-3">
-                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground"
+                >
                   What can I help with?
-                </h1>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                  className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed"
+                >
                   Start a conversation with {model}.
-                </p>
+                </motion.p>
               </div>
 
               <SuggestedPrompts onSelectPrompt={(prompt) => {
@@ -422,20 +488,23 @@ export function ChatArea() {
             className="absolute bottom-[88px] right-6 z-10 p-2 rounded-full bg-accent hover:bg-accent/80 text-foreground border border-border shadow-sm transition-colors cursor-pointer"
             title="Scroll to bottom"
           >
-            <ArrowDown className="w-3.5 h-3.5" />
+            <ArrowDown className="w-3.5 h-3.5" strokeWidth={1.5} />
           </motion.button>
         )}
       </AnimatePresence>
 
       {/* Input */}
       <div className="p-4 pt-2 shrink-0">
-        <div className="max-w-2xl mx-auto relative">
+        <div className="max-w-2xl mx-auto relative border border-border rounded-xl bg-card focus-within:border-foreground/20 transition-colors spotlight-border overflow-hidden">
+          <FileAttachmentList files={attachments} onRemove={removeAttachment} />
           <form 
-            onSubmit={handleSubmit} 
-            className="relative flex items-end gap-2 bg-card border border-border rounded-xl p-2 focus-within:border-foreground/20 transition-colors"
+            onSubmit={handleSubmit}
+            onMouseMove={handleMouseMove}
+            className="relative flex items-end gap-2 p-2"
           >
-            <div className="pl-0.5 pb-0.5 shrink-0">
+            <div className="pl-0.5 pb-0.5 shrink-0 flex items-center gap-0.5">
               <RagToggle />
+              <FileUpload onFilesSelected={handleFilesSelected} disabled={isStreaming} />
             </div>
             
             <textarea
@@ -460,22 +529,25 @@ export function ChatArea() {
                 className="p-2.5 bg-foreground text-background hover:bg-foreground/90 rounded-lg transition-colors shrink-0 cursor-pointer"
                 title="Stop"
               >
-                <Square className="w-3.5 h-3.5 fill-current" />
+                <Square className="w-3.5 h-3.5 fill-current" strokeWidth={1.5} />
               </button>
             ) : (
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="p-2.5 bg-foreground text-background disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-foreground/90 transition-colors shrink-0 cursor-pointer"
-                title="Send"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <VoiceInput onTranscript={(text) => setInput(prev => prev + (prev ? " " : "") + text)} disabled={isStreaming} />
+                <button
+                  type="submit"
+                  disabled={!input.trim() && attachments.length === 0}
+                  className="p-2.5 bg-foreground text-background disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-foreground/90 transition-colors shrink-0 cursor-pointer"
+                  title="Send"
+                >
+                  <Send className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              </div>
             )}
           </form>
           <div className="text-center mt-2 select-none">
-            <span className="text-[10px] text-muted-foreground/40">
-              Press <kbd className="font-[family-name:var(--font-geist-mono)]">Enter</kbd> to send · <kbd className="font-[family-name:var(--font-geist-mono)]">Shift+Enter</kbd> for new line
+            <span className="text-[10px] text-muted-foreground/35 flex items-center justify-center gap-1">
+              Press <kbd className="kbd-premium">Enter ↵</kbd> to send · <kbd className="kbd-premium">Shift</kbd> + <kbd className="kbd-premium">Enter</kbd> for new line
             </span>
           </div>
         </div>
