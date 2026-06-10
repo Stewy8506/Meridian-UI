@@ -308,3 +308,40 @@
 .transition-elastic {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Text Gradient utility */
+.text-gradient {
+  background: linear-gradient(135deg, var(--foreground) 0%, rgba(var(--foreground), 0.75) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Bouncing typing indicator animation */
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  background-color: currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% { 
+    transform: translateY(0);
+    opacity: 0.45;
+  } 
+  40% { 
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}

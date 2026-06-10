@@ -488,6 +488,16 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'ai-workspace-storage',
+      partialize: (state) => {
+        // Exclude ephemeral values like canvasOpen, isStreaming, activeCanvasFileId, etc.
+        const {
+          canvasOpen,
+          isStreaming,
+          activeCanvasFileId,
+          ...rest
+        } = state;
+        return rest;
+      },
     }
   )
 );

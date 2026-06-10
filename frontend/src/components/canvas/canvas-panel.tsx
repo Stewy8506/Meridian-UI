@@ -101,12 +101,13 @@ export function CanvasPanel() {
 
   // Reset selected file when active chat changes
   useEffect(() => {
+    if (isStreaming) return;
     setActiveCanvasFileId(null);
     setActiveDoc(null);
     if (canvasOpen) {
       fetchFiles(true);
     }
-  }, [activeChatId]);
+  }, [activeChatId, isStreaming]);
 
   // Load active document when ID changes
   useEffect(() => {
@@ -199,6 +200,7 @@ export function CanvasPanel() {
           } else {
             setActiveCanvasFileId(null);
             setActiveDoc(null);
+            setCanvasOpen(false); // Auto-close canvas if zero files exist after stream
           }
         } catch (err) {
           console.error("Failed to reload document after stream:", err);
@@ -209,7 +211,7 @@ export function CanvasPanel() {
       
       reloadAfterStream();
     }
-  }, [isStreaming, activeDoc, activeChatId, setActiveCanvasFileId, setActiveDoc, setFiles]);
+  }, [isStreaming, activeDoc, activeChatId, setActiveCanvasFileId, setActiveDoc, setFiles, setCanvasOpen]);
 
   // Handle manual resizing
   useEffect(() => {

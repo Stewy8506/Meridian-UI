@@ -108,6 +108,19 @@ export function Sidebar() {
     const menuOpen = activeMenuChatId === chat.id;
     const pinned = isPinned(chat.id);
 
+    const lastMessage = chat.messages && chat.messages.length > 0 
+      ? chat.messages[chat.messages.length - 1] 
+      : null;
+      
+    const previewText = lastMessage 
+      ? lastMessage.content
+          .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/gi, "")
+          .replace(/<skill_result[\s\S]*?(?:<\/skill_result>|$)/gi, "")
+          .replace(/<canvas_write[\s\S]*?(?:<\/canvas_write>|$)/gi, "")
+          .replace(/<\/?[a-zA-Z_]+[^>]*>/gi, "")
+          .trim()
+      : "";
+
     return (
       <div
         key={chat.id}
@@ -118,14 +131,21 @@ export function Sidebar() {
           }
         }}
         className={cn(
-          "group relative w-full flex items-center px-3 py-2 text-[13px] rounded-lg transition-colors text-left cursor-pointer select-none",
+          "group relative w-full flex items-center px-3 py-2.5 rounded-lg transition-colors text-left cursor-pointer select-none",
           isChatActive
-            ? "bg-accent/80 border border-white/5 text-foreground font-medium shadow-sm"
+            ? "bg-accent/80 border border-white/5 text-foreground shadow-sm"
             : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
           extraClass
         )}
       >
-        <span className="truncate pr-14 flex-1">{chat.title || "Untitled"}</span>
+        <div className="flex flex-col flex-1 min-w-0 pr-10">
+          <span className="truncate text-[13px] font-medium text-foreground">{chat.title || "Untitled"}</span>
+          {previewText && (
+            <span className="truncate text-[10px] text-muted-foreground/50 mt-0.5 font-normal">
+              {previewText}
+            </span>
+          )}
+        </div>
         
         {/* Hover actions */}
         <div className="absolute right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -238,7 +258,7 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className="px-4 py-4 flex items-center justify-between shrink-0 select-none">
-          <h2 className="font-semibold text-sm tracking-tight text-foreground">AI Workspace</h2>
+          <h2 className="font-semibold text-sm tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-foreground/75">Orbit Workspace</h2>
           <button 
             onClick={toggleSidebar} 
             className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground rounded-md transition-colors"

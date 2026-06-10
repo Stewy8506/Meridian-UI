@@ -185,7 +185,12 @@ export function MessageBubble({
   const isEmptyAndStreaming = !isUser && message.content === "" && isStreaming;
 
   const handleCopy = async () => {
-    const cleanText = message.content.replace(/<thought>[\s\S]*?<\/thought>/g, "").trim();
+    const cleanText = message.content
+      .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/gi, "")
+      .replace(/<skill_result[\s\S]*?(?:<\/skill_result>|$)/gi, "")
+      .replace(/<canvas_write[\s\S]*?(?:<\/canvas_write>|$)/gi, "")
+      .replace(/<\/?[a-zA-Z_]+[^>]*>/gi, "")
+      .trim();
     try {
       await navigator.clipboard.writeText(cleanText);
       setCopied(true);
@@ -252,9 +257,10 @@ export function MessageBubble({
         /* Assistant message */
         <div className="w-full">
           {isEmptyAndStreaming ? (
-            <div className="flex items-center gap-2 text-sm text-neutral-400 select-none my-1">
-              <Loader2 className="w-4 h-4 animate-spin text-neutral-500" strokeWidth={1.5} />
-              <span>Connecting to model...</span>
+            <div className="flex items-center gap-1.5 select-none my-2 typing-dots bg-muted/40 px-3 py-2 border border-border/40 rounded-xl w-fit">
+              <span className="w-1.5 h-1.5"></span>
+              <span className="w-1.5 h-1.5"></span>
+              <span className="w-1.5 h-1.5"></span>
             </div>
           ) : (
             <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed break-words">
