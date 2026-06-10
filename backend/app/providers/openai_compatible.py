@@ -33,6 +33,8 @@ class OpenAICompatibleProvider(BaseProvider):
         if tools is None:
             from app.skills.router import skill_router
             tools = skill_router.get_relevant_skills(messages)
+            
+        is_fallback_attempt = kwargs.pop("is_fallback_attempt", False)
         
         async with httpx.AsyncClient() as client:
             payload = {
@@ -44,66 +46,87 @@ class OpenAICompatibleProvider(BaseProvider):
             if tools:
                 payload["tools"] = tools
                 
-            response = await client.post(
-                self._get_url(clean_model),
-                headers=self._get_headers(),
-                json=payload,
-                timeout=60.0
-            )
-            response.raise_for_status()
-            data = response.json()
-            message = data["choices"][0]["message"]
-            
-            # Check for tool calls
-            if "tool_calls" in message and message["tool_calls"]:
-                tool_calls = message["tool_calls"]
-                # Append assistant message with tool calls
-                messages.append(message)
-                
-                # Execute each tool call
-                for tc in tool_calls:
-                    tool_name = tc["function"]["name"]
-                    arguments_str = tc["function"]["arguments"]
-                    tool_call_id = tc["id"]
-                    
-                    try:
-                        args = json.loads(arguments_str) if arguments_str else {}
-                    except json.JSONDecodeError:
-                        args = {}
-                        
-                    from app.skills.executor import skill_executor
-                    exec_args = {
-                        "search_provider": search_provider,
-                        "tavily_api_key": tavily_api_key,
-                        "exa_api_key": exa_api_key,
-                        **args
-                    }
-                    exec_result = await skill_executor.execute_skill(
-                        skill_name=tool_name,
-                        arguments=exec_args,
-                        user_id=user_id
-                    )
-                    tool_result = exec_result.to_string()
-                        
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call_id,
-                        "name": tool_name,
-                        "content": tool_result
-                    })
-                
-                # Recurse to generate response based on tool results
-                return await self.generate(
-                    messages=messages,
-                    model=model,
-                    search_provider=search_provider,
-                    tavily_api_key=tavily_api_key,
-                    exa_api_key=exa_api_key,
-                    user_id=user_id,
-                    **kwargs
+            try:
+                response = await client.post(
+                    self._get_url(clean_model),
+                    headers=self._get_headers(),
+                    json=payload,
+                    timeout=60.0
                 )
-            
-            return message["content"]
+                response.raise_for_status()
+                data = response.json()
+                message = data["choices"][0]["message"]
+                
+                # Check for tool calls
+                if "tool_calls" in message and message["tool_calls"]:
+                    tool_calls = message["tool_calls"]
+                    # Append assistant message with tool calls
+                    messages.append(message)
+                    
+                    # Execute each tool call
+                    for tc in tool_calls:
+                        tool_name = tc["function"]["name"]
+                        arguments_str = tc["function"]["arguments"]
+                        tool_call_id = tc["id"]
+                        
+                        try:
+                            args = json.loads(arguments_str) if arguments_str else {}
+                        except json.JSONDecodeError:
+                            args = {}
+                            
+                        from app.skills.executor import skill_executor
+                        exec_args = {
+                            "search_provider": search_provider,
+                            "tavily_api_key": tavily_api_key,
+                            "exa_api_key": exa_api_key,
+                            **args
+                        }
+                        exec_result = await skill_executor.execute_skill(
+                            skill_name=tool_name,
+                            arguments=exec_args,
+                            user_id=user_id
+                        )
+                        tool_result = exec_result.to_string()
+                            
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call_id,
+                            "name": tool_name,
+                            "content": tool_result
+                        })
+                    
+                    # Recurse to generate response based on tool results
+                    return await self.generate(
+                        messages=messages,
+                        model=model,
+                        search_provider=search_provider,
+                        tavily_api_key=tavily_api_key,
+                        exa_api_key=exa_api_key,
+                        user_id=user_id,
+                        is_fallback_attempt=is_fallback_attempt,
+                        **kwargs
+                    )
+                
+                return message["content"]
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+                if not is_fallback_attempt and ("generativelanguage.googleapis.com" in self.base_url or "gemini" in clean_model):
+                    fallback_model = "gemini-2.5-flash"
+                    import logging
+                    logging.getLogger("app.providers.openai_compatible").warning(
+                        f"Model {clean_model} failed with {e}. Falling back to {fallback_model}."
+                    )
+                    return await self.generate(
+                        messages=messages,
+                        model=fallback_model,
+                        search_provider=search_provider,
+                        tavily_api_key=tavily_api_key,
+                        exa_api_key=exa_api_key,
+                        user_id=user_id,
+                        is_fallback_attempt=True,
+                        **kwargs
+                    )
+                else:
+                    raise e
 
     async def stream(self, messages: List[Dict[str, Any]], model: str, **kwargs) -> AsyncGenerator[str, None]:
         search_provider = kwargs.pop("search_provider", "tavily")
@@ -116,6 +139,8 @@ class OpenAICompatibleProvider(BaseProvider):
         if tools is None:
             from app.skills.router import skill_router
             tools = skill_router.get_relevant_skills(messages)
+            
+        is_fallback_attempt = kwargs.pop("is_fallback_attempt", False)
         
         async with httpx.AsyncClient() as client:
             payload = {
@@ -130,49 +155,70 @@ class OpenAICompatibleProvider(BaseProvider):
             tool_calls_map = {}
             is_tool_call = False
             
-            async with client.stream(
-                "POST", 
-                self._get_url(clean_model), 
-                headers=self._get_headers(), 
-                json=payload,
-                timeout=60.0
-            ) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if line.startswith("data: ") and line != "data: [DONE]":
-                        data_str = line[6:]
-                        try:
-                            data = json.loads(data_str)
-                            choice = data["choices"][0]
-                            delta = choice.get("delta", {})
-                            
-                            # Check if the model is returning tool calls
-                            if "tool_calls" in delta:
-                                is_tool_call = True
-                                for tc in delta["tool_calls"]:
-                                    idx = tc["index"]
-                                    if idx not in tool_calls_map:
-                                        tool_calls_map[idx] = {
-                                            "id": "",
-                                            "type": "function",
-                                            "function": {"name": "", "arguments": ""}
-                                        }
-                                    if "id" in tc:
-                                        tool_calls_map[idx]["id"] += tc["id"]
-                                    if "function" in tc:
-                                        f = tc["function"]
-                                        if "name" in f:
-                                            tool_calls_map[idx]["function"]["name"] += f["name"]
-                                        if "arguments" in f:
-                                            tool_calls_map[idx]["function"]["arguments"] += f["arguments"]
-                            
-                            # If not a tool call, yield content if any
-                            if not is_tool_call:
-                                content = delta.get("content")
-                                if content:
-                                    yield content
-                        except json.JSONDecodeError:
-                            continue
+            try:
+                async with client.stream(
+                    "POST", 
+                    self._get_url(clean_model), 
+                    headers=self._get_headers(), 
+                    json=payload,
+                    timeout=60.0
+                ) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if line.startswith("data: ") and line != "data: [DONE]":
+                            data_str = line[6:]
+                            try:
+                                data = json.loads(data_str)
+                                choice = data["choices"][0]
+                                delta = choice.get("delta", {})
+                                
+                                # Check if the model is returning tool calls
+                                if "tool_calls" in delta:
+                                    is_tool_call = True
+                                    for idx, tc in enumerate(delta["tool_calls"]):
+                                        tool_idx = tc.get("index", idx)
+                                        if tool_idx not in tool_calls_map:
+                                            tool_calls_map[tool_idx] = {
+                                                "id": "",
+                                                "type": "function",
+                                                "function": {"name": "", "arguments": ""}
+                                            }
+                                        if "id" in tc:
+                                            tool_calls_map[tool_idx]["id"] += tc["id"]
+                                        if "function" in tc:
+                                            f = tc["function"]
+                                            if "name" in f:
+                                                tool_calls_map[tool_idx]["function"]["name"] += f["name"]
+                                            if "arguments" in f:
+                                                tool_calls_map[tool_idx]["function"]["arguments"] += f["arguments"]
+                                
+                                # If not a tool call, yield content if any
+                                if not is_tool_call:
+                                    content = delta.get("content")
+                                    if content:
+                                        yield content
+                            except json.JSONDecodeError:
+                                continue
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+                if not is_fallback_attempt and ("generativelanguage.googleapis.com" in self.base_url or "gemini" in clean_model):
+                    fallback_model = "gemini-2.5-flash"
+                    import logging
+                    logging.getLogger("app.providers.openai_compatible").warning(
+                        f"Model {clean_model} failed with {e}. Falling back to {fallback_model}."
+                    )
+                    async for chunk in self.stream(
+                        messages=messages,
+                        model=fallback_model,
+                        search_provider=search_provider,
+                        tavily_api_key=tavily_api_key,
+                        exa_api_key=exa_api_key,
+                        user_id=user_id,
+                        is_fallback_attempt=True,
+                        **kwargs
+                    ):
+                        yield chunk
+                else:
+                    raise e
             
             # If we accumulated tool calls, execute them and recurse
             if is_tool_call and tool_calls_map:
@@ -225,6 +271,7 @@ class OpenAICompatibleProvider(BaseProvider):
                     tavily_api_key=tavily_api_key,
                     exa_api_key=exa_api_key,
                     user_id=user_id,
+                    is_fallback_attempt=is_fallback_attempt,
                     **kwargs
                 ):
                     yield chunk

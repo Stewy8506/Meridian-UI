@@ -70,7 +70,7 @@ PROVIDERS_CONFIG: Dict[str, ProviderConfig] = {
         adapter="openai_compatible",
         supports_vision=True,
         supports_tool_calling=True,
-        default_model="gemini-1.5-pro"
+        default_model="gemini-2.5-flash"
     ),
     "groq": ProviderConfig(
         id="groq",

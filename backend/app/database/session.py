@@ -19,3 +19,16 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Import all models to ensure mappers are compiled correctly when session/database logic is accessed
+from app.database.models.conversation import Base, Conversation, Message
+from app.database.models.user import User, UserApiKey, Memory
+from app.database.models.knowledge import KnowledgeBase, Document
+from app.database.models.usage import UsageRecord
+from app.database.models.settings import SystemSetting
+from app.database.models.arena import ArenaMatch, ModelRating
+from app.database.models.persona import Persona
+from app.database.models.workflow import Workflow
+from app.database.models.canvas import CanvasDocument, CanvasVersion
+from app.database.models.prompt import PromptTemplate
+

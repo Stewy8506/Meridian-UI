@@ -312,6 +312,7 @@ export function ChatArea() {
             return next;
           });
           
+          let currentEvent = "";
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -320,9 +321,16 @@ export function ChatArea() {
             const lines = chunk.split("\n");
             
             for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.slice(6);
+              const trimmed = line.trim();
+              if (trimmed.startsWith("event: ")) {
+                currentEvent = trimmed.slice(7).trim();
+              } else if (trimmed.startsWith("data: ")) {
+                const dataStr = trimmed.slice(6);
                 if (dataStr === "[DONE]") break;
+                
+                if (currentEvent === "error") {
+                  throw new Error(dataStr);
+                }
                 
                 assistantText += dataStr;
                 setMessages((prev) => {
