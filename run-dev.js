@@ -63,14 +63,14 @@ function cleanupAndExit() {
   if (isCleaningUp) return;
   isCleaningUp = true;
   console.log('\x1b[33m%s\x1b[0m', '\n🛑 [System] Shutting down dev servers...');
-  
+
   try {
     backend.kill();
-  } catch (e) {}
-  
+  } catch (e) { }
+
   try {
     frontend.kill();
-  } catch (e) {}
+  } catch (e) { }
 
   setTimeout(() => {
     process.exit(0);

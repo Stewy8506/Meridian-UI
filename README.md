@@ -1,200 +1,128 @@
-# 🚀 AI Workspace (Premium Operating Environment)
+# AI Workspace
 
-A self-hosted, production-grade AI operating environment and orchestration workspace that runs entirely locally or in the cloud. It features dynamic multi-provider routing, a retrieval-gated scalable skill engine, JWT authentication, and secure, encrypted-at-rest server-side API key persistence.
+A self-hosted AI operating environment with multi-provider routing, RAG, a dynamic skill engine, and JWT-secured multi-user persistence. Runs locally or in the cloud.
 
----
-
-## 🎨 Phase 1 — Premium UI Overhaul
-
-The user interface has been transformed into a sophisticated, fluid operating canvas with the following features:
-
-- **🌓 theme-toggle.tsx**: Animated toggle for Dark, Light, and System modes that persists settings to localStorage and the Zustand store, applying `.dark` or `.light` classes to the document root.
-- **🔍 command-palette.tsx**: A global Raycast-style shortcut (`Ctrl+K` / `Cmd+K`) supporting arrow key navigation, recent actions, search over conversations, switching models, switching providers, toggling themes, and entering settings.
-- **toast.tsx**: Stacking, auto-dismissing toast notifications with progress bars for successes, warnings, and error indicators.
-- **📁 sidebar.tsx**:
-  - Drag-and-drop foldering organization and pinning of favorite chats.
-  - Search filter bar at the top of the conversation list.
-  - Chronological chat grouping ("Today", "Yesterday", "This Week", "Older").
-  - Expandable/collapsible sidebar transition animations.
-  - Bottom avatar area reflecting user login profile status.
-- **💬 chat-area.tsx**:
-  - **Message hover toolbar**: Actions to copy text, edit user messages, regenerate assistant responses, and record 👍/👎 reactions for analytics.
-  - **Edit & Resend**: Click to edit previous user prompts, clearing and regenerating answers from that branch.
-  - **Blinking streaming cursor**: Blinking cursor indicating processing state.
-  - **Stop generation**: Instant cancellation of ongoing LLM stream calls.
-  - **Suggested prompts**: Categorized starter cards (Creative, Code, Analysis, Writing, Research) in an empty workspace state.
-  - **Scroll-to-bottom FAB**: Floating action button with a new message badge indicator.
-  - Message timestamps displaying relative time.
-- **👤 message-bubble.tsx**: Extracted layout containing provider logo branding (Google, OpenAI, Anthropic, Local), AnimatePresence transition entries, and a thinking shimmer while waiting for token responses.
-- **💻 code-block.tsx**: Advanced code block renderer supporting copy-to-clipboard animations, syntax highlighting, line numbers toggling, and collapsible structures for codes exceeding 30 lines.
-- **⚙️ settings-dialog.tsx**: Full-page tabbed settings dashboard (General, Providers, Models, Skills, Appearance, Keyboard Shortcuts, About) with connection status indicators (connected ✓ / not configured ⚠️), temperature/top-p/max-tokens sliders, system prompt editors, and settings export/import JSON hooks.
-- **⌨️ use-keyboard-shortcuts.ts**: Shortcuts tracking system:
-  - `Ctrl+K`: Command menu
-  - `Ctrl+N`: New conversation
-  - `Ctrl+Shift+S`: Sidebar toggling
-  - `Ctrl+/`: Focus input prompt
-  - `Alt+1-9`: Switch active chats by index
-  - `Ctrl+?`: Shortcut cheat sheet overlay
+> **Stack:** Next.js · FastAPI · SQLite · Zustand · SQLAlchemy · sentence-transformers
 
 ---
 
-## 🛠️ Phase 2 — Scalable Skill Engine
+## What it is
 
-A retrieval-gated, dynamic skill runner capable of scaling to thousands of integrations.
+AI Workspace is a full-stack chat application built for power users who want direct control over their AI stack. Instead of locking into one provider, it routes requests across 25+ LLM endpoints — OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, Cohere, AWS Bedrock, Azure OpenAI, Perplexity, Together AI, Fireworks, SambaNova, Cerebras, Cloudflare, and more — with live connection status and per-provider credential management.
 
-- **base.py & categories.py**: Standardized abstract skill interface (`BaseSkill`) and category enums (WEB, CODE, DATA, FILE, IMAGE, AUDIO, COMMUNICATION, KNOWLEDGE, SYSTEM, UTILITY) supporting timeout controls, config checks, and schemas.
-- **registry.py**: Scans the `skills/builtin/` directory on server startup, registers descriptions and metadata into the SQLite database, and lazy-loads python code modules on-demand.
-- **router.py**: Two-stage intent classification. Stage 1 uses keyword heuristics to find candidate categories. Stage 2 executes TF-IDF cosine similarity search over descriptions to bind only the top-K relevant skill schemas (default 8) to the LLM tool context.
-- **executor.py**: Async executor enforcing timeouts (default 30s), logging durations/success status, capturing stdout/stderr, and formatting traceback exceptions.
-- **skills.py API Routes**:
-  - `GET /api/skills`: Paginate, search, and filter skills.
-  - `GET /api/skills/{name}`: Get skill parameters and schema.
-  - `PUT /api/skills/{name}/enable` & `/disable`: Toggle capability activation.
-  - `GET /api/skills/categories`: Retrieve categorized totals summary.
-  - `POST /api/skills/{name}/test`: Direct skill run execution helper.
-- **skill-marketplace.tsx**: Full-page marketplace browser enabling category filtering, search, state toggling, and a live testing panel for running skills with custom JSON inputs.
-- **skill-indicator.tsx**: Header dropdown chip listing enabled capabilities.
-- **skill-result.tsx**: Renders collapsible execution metrics, success badges, elapsed execution time, and raw outputs inside the chat bubble list.
-- **🔌 Discovered Capabilities**:
-  - `web_search`: Search using Tavily or Exa engine.
-  - `wikipedia`: Fetch historical details and summaries.
-  - `arxiv_search`: Retrieve scholarly documents.
-  - `calculator`: Safely compute math equations.
-  - `datetime_tool`: Format current date/time and timezone configurations.
-  - `uuid_generate`: Generate secure keys and random hashes.
-  - `json_transform`: Query/parse JSON arrays.
-  - `memory_store` & `memory_recall`: Read and write facts to the user's sqlite database profile.
+On top of the chat core, it ships a retrieval-augmented generation (RAG) pipeline for querying your own documents, a plugin-style skill engine for tool use (web search, code execution, memory, etc.), and a production-grade auth layer with encrypted-at-rest API key storage.
 
 ---
 
-## 🔐 Phase 3 — Authentication & Server-Side Persistence
+## Features
 
-A secure persistence layer for multiple users.
+### Multi-Provider LLM Routing
+Switch between 25+ providers from a single interface. Custom streaming adapters handle non-OpenAI protocols natively — Claude's thinking tags, Cohere Chat v2, AWS Bedrock SigV4, and Azure deployment routing. Provider health is checked on startup and surfaced in the settings dashboard.
 
-- **auth.py**: Password cryptography hashing via `bcrypt` and JWT bearer token creation and parsing.
-- **user.py (Database Model)**: Defines schemas for `User`, `UserApiKey` (encrypted at rest), and `Memory` tables.
-- **conversation.py (Database Model)**: Extends standard parameters to store `user_id`, `system_prompt`, model/provider selections, pinning state, tag list, and `Message.extra_metadata` JSON.
-- **auth.py (API Routes)**: User signup, login, status check, and profile me update routes.
-- **api_keys.py (API Routes)**: Securely saves user's provider API keys encrypted on the server utilizing base64 Fernet cryptography.
-- **conversations.py (API Routes)**: CRUD handlers for persistent chat history, branching/forking chats, and importing OpenWebUI-formatted history dumps.
-- **api-client.ts**: Standard fetch wrapper with automatic JWT injection and 401 logout redirect triggers.
-- **auth-store.ts**: State store managing authenticated profiles and login redirects.
-- **login-page.tsx**: Modern dark-themed signup/signin card overlay.
-- **auth-provider.tsx**: Client component wrapping root views, showing a loader spinner during initial token verification, and displaying the login overlay when auth is required.
+### Skill Engine
+A two-stage intent router selects the right tools per query — keyword heuristics narrow the category, then TF-IDF cosine similarity picks the top-K skill schemas to bind into the LLM tool context. Skills auto-register from the `skills/builtin/` directory on startup. Built-in capabilities include:
 
----
+- `web_search` — Tavily or Exa
+- `wikipedia`, `arxiv_search` — reference lookups
+- `calculator`, `datetime_tool`, `uuid_generate`
+- `json_transform` — query/parse JSON
+- `memory_store` / `memory_recall` — persistent per-user facts
 
-## 🌐 Phase 4 — Universal Provider System (25+ Providers)
+A marketplace UI lets you browse, toggle, and live-test skills with custom JSON inputs.
 
-A unified model invocation system mapping 25+ cloud, local, and gateway endpoints.
+### RAG & Knowledge Collections
+Upload PDFs, Word docs, markdown, CSV, or JSON files into named knowledge collections. Documents are chunked with sentence-aligned overlap, embedded with `all-MiniLM-L6-v2` (with OpenAI/Gemini embedding fallbacks), and stored in a SQLite-backed vector store. At query time, relevant chunks are retrieved via cosine similarity and prepended to the prompt. Select which collections to augment per conversation.
 
-- **provider_configs.py**: Configuration schemas defining IDs, adapters, base URLs, and quirk adjustments (e.g. headers, prefix trimming) for 25+ endpoints (OpenAI, Anthropic, Google Gemini, Groq, Cohere, DeepSeek, OpenRouter, Perplexity, Bedrock, Azure, Mistral, Together AI, Fireworks AI, SiliconFlow, Cerebras, SambaNova, Cloudflare, etc.).
-- **registry.py**: Dynamic manager loading active providers and testing connections. Exposes provider states (configured/offline) directly to client dashboards.
-- **custom_adapters**: Native non-OpenAI message-streaming adapters:
-  - **anthropic.py**: Custom client supporting Claude's native system format, tool outputs, and reasoning/thinking tag streaming.
-  - **cohere.py**: Cohere Chat v2 API mapper.
-  - **bedrock.py**: AWS Bedrock Runtime client using boto3 executing synchronous calls inside asyncio thread pools with SigV4 request signatures.
-  - **azure_openai.py**: Deployment-based endpoint and API versioning adapter.
-- **provider-grid.tsx**: Interactive settings grid displaying cards for all 25+ providers grouped by type (Local, Frontier, Specialized), supporting credential inputs, secure decryption, and active connection tests.
-- **settings-dialog.tsx**: Dynamically pulls configured engines from backend endpoints and displays active selections.
+### Auth & Persistence
+Multi-user JWT auth with bcrypt password hashing. Provider API keys are encrypted at rest using Fernet (AES-128-CBC). Conversations persist with per-user isolation, branch/fork support, pinning, tags, and OpenWebUI history import compatibility.
 
----
-
-## 📚 Phase 5 — RAG & Knowledge Management
-
-A localized Retrieval-Augmented Generation pipeline allowing users to attach document databases to chat prompts.
-
-- **document_processor.py**: Multi-extension extraction supporting PDF (`PyMuPDF`), Word (`python-docx`), TXT, MD, CSV, and JSON formats, with a character-level sentence-aligned overlap text splitter.
-- **embeddings.py**: Unified generator utilizing local HuggingFace `all-MiniLM-L6-v2` (`sentence-transformers`), falling back to remote APIs (OpenAI / Gemini Embeddings), or a lightweight character-hash tf-idf fallback.
-- **vector_store.py**: Resilient SQLite-backed vector store fallback. Resolves windows SQLite database versioning constraints (ChromaDB SQLite >= 3.35.0 requirement) by running a custom, native-python SQLite collection manager computing cosine similarity math in-memory.
-- **retriever.py**: Performs multi-collection semantic searches, dedups chunks across files, and formats document excerpts into context blocks.
-- **API Routes**:
-  - **documents.py**: Endpoints to upload files (`UploadFile`), parse, chunk, embed, index, and delete documents.
-  - **knowledge.py**: CRUD endpoints to create, fetch details of, and delete named knowledge collections.
-  - **chat.py**: Intercepts chat requests, performs semantic queries on selected collections, and prepends formatted results to prompt messages.
-- **knowledge-panel.tsx**: Drag-and-drop document hub showing upload state indicators, collection chunk statistics, and file registries.
-- **rag-toggle.tsx**: Input form dropdown checklist for selecting search-augmenting collections for the current chat session.
+### Chat Interface
+- Raycast-style command palette (`Ctrl+K`) — search conversations, switch models, toggle settings
+- Edit & resend any previous message, regenerating from that branch
+- Stop generation mid-stream
+- Drag-and-drop sidebar with folder organization, pinning, and chronological grouping
+- Full keyboard shortcut system (`Ctrl+N`, `Ctrl+/`, `Alt+1-9`, etc.)
+- Code blocks with syntax highlighting, line numbers, and collapse for 30+ line blocks
+- Tabbed settings dashboard with temperature/top-p/max-tokens controls and system prompt editor
 
 ---
 
-## 🏛️ Project Architecture
+## Architecture
 
 ```
 AI Workspace/
-├── backend/            # FastAPI ASGI Backend Service
-│   ├── app/
-│   │   ├── api/        # Endpoint routers (auth, chat, keys, skills, conversations, documents, knowledge)
-│   │   ├── core/       # Security utilities, JWT setups, and configs
-│   │   ├── database/   # Declarative SQLAlchemy SQLite models
-│   │   ├── providers/  # Abstracted LLM adapters (OpenAI, Gemini, Anthropic, Cohere, Bedrock, Azure)
-│   │   ├── rag/        # RAG Engine (embeddings, vector store, document processor, retriever)
-│   │   ├── skills/     # Skill Engine (builtin category subpackages & executor)
-│   │   └── main.py     # FastAPI server entry point
-│   ├── venv/           # Python virtual environment
-│   └── requirements.txt# Backend dependencies (cryptography, jwt, passlib, sentence-transformers, chromadb, etc.)
+├── backend/                  # FastAPI ASGI service
+│   └── app/
+│       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, documents, knowledge)
+│       ├── core/             # JWT config, security utilities
+│       ├── database/         # SQLAlchemy models (User, Conversation, Message, Memory, UserApiKey)
+│       ├── providers/        # LLM adapters (OpenAI-compat + custom: Anthropic, Cohere, Bedrock, Azure)
+│       ├── rag/              # Document processor, embeddings, vector store, retriever
+│       ├── skills/           # Skill registry, router, executor, built-in skill packages
+│       └── main.py
 │
-├── frontend/           # Next.js Frontend Application
-│   ├── src/
-│   │   ├── app/        # Page routing & global styling
-│   │   ├── components/ # UI panels (auth, chat, settings, skills, knowledge)
-│   │   ├── lib/        # API client fetch handlers & class merges
-│   │   └── store/      # Zustand state managers (app, auth)
-│   └── package.json    # Frontend dependency manifests
+├── frontend/                 # Next.js app
+│   └── src/
+│       ├── app/              # Page routing, global styles
+│       ├── components/       # Chat, sidebar, settings, skills, knowledge, auth UI
+│       ├── lib/              # API client (JWT injection, 401 handling)
+│       └── store/            # Zustand (app state, auth)
 │
-├── package.json        # Root scripts manifest
-└── run-dev.js          # Root concurrent process runner
+├── package.json              # Root scripts
+└── run-dev.js                # Concurrent dev server runner
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 1. Environment Setup
+### 1. Configure environment
 
-Configure backend keys and database locations in `backend/`:
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Supply keys and authentication secrets in `backend/.env`:
+Edit `backend/.env`:
+
 ```env
-# Server-side Auth Options
 AUTH_ENABLED=True
-AUTH_SECRET_KEY=generate_a_secure_jwt_secret_signing_key_here
-ENCRYPTION_KEY=generate_a_secure_32_byte_base64_encryption_key_here
+AUTH_SECRET_KEY=your_jwt_signing_secret
+ENCRYPTION_KEY=your_32_byte_base64_fernet_key
 
-# Provider APIs
-OPENAI_API_KEY=your_openai_key_here
-GOOGLE_API_KEY=your_gemini_key_here
+OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=...
 
-# Search Engine APIs
-TAVILY_API_KEY=your_tavily_key_here
-EXA_API_KEY=your_exa_key_here
+TAVILY_API_KEY=...       # optional, for web_search skill
+EXA_API_KEY=...          # optional, alternative search engine
 ```
 
----
+### 2. Start servers
 
-### 2. Spawning Servers
-
-Run both the Next.js client and FastAPI server concurrently from the root directory:
 ```bash
 npm run dev:all
 ```
-- Frontend starts at **`http://localhost:5000`** (Next.js client-side interface).
-- Backend starts at **`http://localhost:8000`** (FastAPI documentation at `/docs`).
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
+
+### 3. Verify
+
+```bash
+# Backend import check
+cd backend && .\venv\Scripts\python -c "import app.main; print('OK')"
+
+# Frontend build check
+cd frontend && npm run build
+```
 
 ---
 
-## 🧪 Verification & Development
+## Requirements
 
-Run compilation checks and unit tests to verify stability:
-```bash
-# Verify backend compiles and imports cleanly
-cd backend
-.\venv\Scripts\python -c "import app.main; print('Backend loaded successfully!')"
-
-# Run type checking and production frontend builds
-cd frontend
-npm run build
-```
+- Node.js 18+
+- Python 3.10+
+- SQLite 3.35+ (required for ChromaDB; the custom SQLite vector store fallback bypasses this if needed)

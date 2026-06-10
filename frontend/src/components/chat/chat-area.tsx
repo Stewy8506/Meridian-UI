@@ -15,6 +15,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { motion, AnimatePresence } from "framer-motion";
 import { SkillIndicator } from "../skills/skill-indicator";
 import { RagToggle } from "../knowledge/rag-toggle";
+import { getBaseUrl } from "@/lib/api-client";
 
 export function ChatArea() {
   const { 
@@ -93,7 +94,7 @@ export function ChatArea() {
   const generateChatTitle = async (chatId: string, userMsg: string, assistantMsg: string) => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
-      const response = await fetch("http://localhost:8000/api/chat/completions", {
+      const response = await fetch(`${getBaseUrl()}/api/chat/completions`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -177,7 +178,7 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
         }
 
         const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
-        const response = await fetch("http://localhost:8000/api/chat/completions", {
+        const response = await fetch(`${getBaseUrl()}/api/chat/completions`, {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
