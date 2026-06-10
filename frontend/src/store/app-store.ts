@@ -259,18 +259,39 @@ export const useAppStore = create<AppState>()(
       })),
       
       createChat: () => {
-        const newId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
-        const newChat: ChatSession = {
-          id: newId,
-          title: 'New Chat',
-          messages: [],
-          createdAt: Date.now()
-        };
-        set((state) => ({
-          chats: [newChat, ...state.chats],
-          activeChatId: newId,
-          messages: []
-        }));
+        let newId = "";
+        set((state) => {
+          // If the current active chat is already empty, keep it
+          const activeChat = state.chats.find(c => c.id === state.activeChatId);
+          if (activeChat && activeChat.messages.length === 0) {
+            newId = state.activeChatId || "";
+            return {};
+          }
+
+          // Otherwise, if there is another empty chat session in the list, switch to it
+          const emptyChat = state.chats.find(c => c.messages.length === 0);
+          if (emptyChat) {
+            newId = emptyChat.id;
+            return {
+              activeChatId: emptyChat.id,
+              messages: []
+            };
+          }
+
+          // Create a new empty chat session
+          newId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
+          const newChat: ChatSession = {
+            id: newId,
+            title: 'New Chat',
+            messages: [],
+            createdAt: Date.now()
+          };
+          return {
+            chats: [newChat, ...state.chats],
+            activeChatId: newId,
+            messages: []
+          };
+        });
         return newId;
       },
 

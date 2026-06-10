@@ -53,6 +53,7 @@ export function Sidebar() {
   }
 
   const filteredChats = chats.filter(chat => 
+    chat.messages.length > 0 &&
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
