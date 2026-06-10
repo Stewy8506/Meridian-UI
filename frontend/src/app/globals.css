@@ -1,46 +1,196 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0a0a0a;
-  --color-foreground: #ededed;
-  --color-card: #141414;
-  --color-card-foreground: #ededed;
-  --color-popover: #141414;
-  --color-popover-foreground: #ededed;
-  --color-primary: #ededed;
-  --color-primary-foreground: #0a0a0a;
-  --color-secondary: #262626;
-  --color-secondary-foreground: #ededed;
-  --color-muted: #262626;
-  --color-muted-foreground: #a3a3a3;
-  --color-accent: #262626;
-  --color-accent-foreground: #ededed;
-  --color-destructive: #7f1d1d;
-  --color-destructive-foreground: #fef2f2;
-  --color-border: #262626;
-  --color-input: #262626;
-  --color-ring: #d4d4d4;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
   
-  --radius-lg: 0.5rem;
-  --radius-md: calc(0.5rem - 2px);
-  --radius-sm: calc(0.5rem - 4px);
+  --animate-fade-in: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: shimmer 2.5s infinite linear;
+  --animate-glow-pulse: glowPulse 2s infinite ease-in-out;
+  --animate-float: float 4s ease-in-out infinite;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.4; filter: drop-shadow(0 0 2px rgba(129, 140, 248, 0.2)); }
+    50% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.5)); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+  
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #6366f1;
+}
+
+.dark {
+  --background: #030712;
+  --foreground: #f3f4f6;
+  
+  --card: #0b0f19;
+  --card-foreground: #f3f4f6;
+  
+  --popover: #0b0f19;
+  --popover-foreground: #f3f4f6;
+  
+  --primary: #818cf8;
+  --primary-foreground: #030712;
+  
+  --secondary: #1e293b;
+  --secondary-foreground: #cbd5e1;
+  
+  --muted: #0f172a;
+  --muted-foreground: #94a3b8;
+  
+  --accent: #1e293b;
+  --accent-foreground: #f3f4f6;
+  
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #818cf8;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--border);
+    outline-color: var(--ring);
   }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: var(--background);
+    color: var(--foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition-property: background-color, color, border-color;
+    transition-duration: 200ms;
   }
 }
 
-/* Scrollbar customization */
+/* Glassmorphism styles */
+.glass {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(11, 15, 25, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-subtle {
+  background: rgba(11, 15, 25, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.03);
+}
+
+.dark .glass-card {
+  background: rgba(11, 15, 25, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient styling */
+.text-gradient-primary {
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #14b8a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .text-gradient-primary {
+  background: linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #2dd4bf 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Premium scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -48,19 +198,89 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-muted);
-  border-radius: 4px;
+  background: rgba(100, 116, 139, 0.2);
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted-foreground);
+  background: rgba(100, 116, 139, 0.4);
 }
 
-/* Highlight.js styling base for dark mode */
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Highlightjs customizations */
 .hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 1em;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #0e1117 !important;
+  border-radius: var(--radius-md);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Code content custom markdown lists */
+.prose {
+  color: var(--foreground);
+}
+.prose p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose ul, .prose ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.25rem;
+}
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.prose ul {
+  list-style-type: disc;
+}
+.prose ol {
+  list-style-type: decimal;
+}
+.prose pre {
+  margin: 1rem 0;
+  padding: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+.prose h1 { font-size: 1.5rem; }
+.prose h2 { font-size: 1.25rem; }
+.prose h3 { font-size: 1.125rem; }
+
+/* Blinking cursor for streaming */
+.streaming-cursor::after {
+  content: "▊";
+  display: inline-block;
+  color: var(--primary);
+  animation: cursorBlink 0.8s steps(2, start) infinite;
+  margin-left: 2px;
+  font-size: 0.9em;
+}
+
+@keyframes cursorBlink {
+  to { visibility: hidden; }
 }
