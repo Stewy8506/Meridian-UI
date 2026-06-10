@@ -81,6 +81,12 @@ interface AppState {
     closeOverlays: string;
   };
 
+  // Canvas View State
+  canvasOpen: boolean;
+  activeCanvasFileId: string | null;
+  setCanvasOpen: (open: boolean) => void;
+  setActiveCanvasFileId: (id: string | null) => void;
+
   setProvider: (provider: string) => void;
   setModel: (model: string) => void;
   toggleSidebar: () => void;
@@ -184,6 +190,12 @@ export const useAppStore = create<AppState>()(
         switchChats: 'alt+1-9',
         closeOverlays: 'esc',
       },
+
+      // Canvas state defaults
+      canvasOpen: false,
+      activeCanvasFileId: null,
+      setCanvasOpen: (open) => set({ canvasOpen: open }),
+      setActiveCanvasFileId: (id) => set({ activeCanvasFileId: id }),
 
       setProvider: (provider) => set({ provider }),
       setModel: (model) => set({ model }),

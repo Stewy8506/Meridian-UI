@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { 
   Plus, Trash2, Pin, Search, 
   ChevronDown, ChevronRight, MoreVertical, X, FolderMinus, 
-  Settings, LogOut, FolderPlus, Folder
+  Settings, LogOut, FolderPlus, Folder, Swords, Workflow, BarChart2, MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -111,7 +111,12 @@ export function Sidebar() {
     return (
       <div
         key={chat.id}
-        onClick={() => setActiveChatId(chat.id)}
+        onClick={() => {
+          setActiveChatId(chat.id);
+          if (typeof window !== "undefined" && window.location.pathname !== "/") {
+            window.location.href = "/";
+          }
+        }}
         className={cn(
           "group relative w-full flex items-center px-3 py-2 text-[13px] rounded-lg transition-colors text-left cursor-pointer select-none",
           isChatActive
@@ -279,7 +284,13 @@ export function Sidebar() {
         {/* New Chat + Search */}
         <div className="px-3 pb-3 space-y-2 shrink-0">
           <button 
-            onClick={() => { setView('chat'); createChat(); }}
+            onClick={() => { 
+              setView('chat'); 
+              createChat(); 
+              if (typeof window !== "undefined" && window.location.pathname !== "/") {
+                window.location.href = "/";
+              }
+            }}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-border hover:border-foreground/30 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground transition-all select-none cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -309,6 +320,71 @@ export function Sidebar() {
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-3 select-none">
           
+          {/* Workspace Apps */}
+          <div className="space-y-0.5">
+            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em] px-3 py-1.5">Apps</div>
+            
+            <a
+              href="/"
+              onClick={(e) => {
+                if (typeof window !== "undefined" && window.location.pathname === "/") {
+                  e.preventDefault();
+                  setView('chat');
+                }
+              }}
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
+                typeof window !== "undefined" && window.location.pathname === "/" && currentView === 'chat'
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              )}
+            >
+              <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Chat Assistant</span>
+            </a>
+
+            <a
+              href="/arena"
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
+                typeof window !== "undefined" && window.location.pathname === "/arena"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              )}
+            >
+              <Swords className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Model Arena</span>
+            </a>
+
+            <a
+              href="/workflows"
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
+                typeof window !== "undefined" && window.location.pathname === "/workflows"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              )}
+            >
+              <Workflow className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Prompt Chains</span>
+            </a>
+
+            <a
+              href="/analytics"
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
+                typeof window !== "undefined" && window.location.pathname === "/analytics"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              )}
+            >
+              <BarChart2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Analytics Dashboard</span>
+            </a>
+          </div>
+
+          <div className="h-px bg-border my-1" />
+
           {/* Folders */}
           <div className="space-y-0.5">
             <div className="flex items-center justify-between px-3 py-1">

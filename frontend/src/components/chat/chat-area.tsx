@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAppStore, Message } from "@/store/app-store";
 import { 
   PanelLeft, Send, Loader2, 
-  ArrowDown, Square
+  ArrowDown, Square, User, FileCode, BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "../ui/toast";
@@ -18,6 +18,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SkillIndicator } from "../skills/skill-indicator";
 import { RagToggle } from "../knowledge/rag-toggle";
 import { getBaseUrl } from "@/lib/api-client";
+import { PersonaManager } from "../personas/persona-manager";
+import { CanvasPanel } from "../canvas/canvas-panel";
+import { PromptLibrary } from "../prompts/prompt-library";
 
 export function ChatArea() {
   const { 
@@ -39,7 +42,9 @@ export function ChatArea() {
     temperature,
     topP,
     maxTokens,
-    activeKbIds
+    activeKbIds,
+    canvasOpen,
+    setCanvasOpen
   } = useAppStore();
   
   const [input, setInput] = useState("");
@@ -51,6 +56,9 @@ export function ChatArea() {
   
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [showScrollFAB, setShowScrollFAB] = useState(false);
+  const [personaManagerOpen, setPersonaManagerOpen] = useState(false);
+  const [activePersona, setActivePersona] = useState<any>(null);
+  const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -379,10 +387,11 @@ export function ChatArea() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background relative min-w-0">
-      
-      {/* Header */}
-      <header className="h-12 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10 select-none">
+    <div className="flex-1 flex h-full bg-background relative min-w-0">
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        
+        {/* Header */}
+        <header className="h-12 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10 select-none">
         <div className="flex items-center gap-3">
           {!sidebarOpen && (
             <button 
@@ -396,6 +405,29 @@ export function ChatArea() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPersonaManagerOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 bg-neutral-950 border border-neutral-850 hover:bg-neutral-900 rounded-md text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer font-medium"
+            title="Change AI Persona"
+          >
+            <User className="w-3.5 h-3.5 text-neutral-500" strokeWidth={1.5} />
+            <span>{activePersona ? activePersona.name : "Select Persona"}</span>
+          </button>
+
+          <button
+            onClick={() => setCanvasOpen(!canvasOpen)}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 border rounded-md text-xs transition-colors cursor-pointer font-medium",
+              canvasOpen
+                ? "bg-neutral-100 border-neutral-100 text-black font-semibold"
+                : "bg-neutral-950 border-neutral-850 hover:bg-neutral-900 text-neutral-400 hover:text-white"
+            )}
+            title="Toggle Interactive Canvas"
+          >
+            <FileCode className="w-3.5 h-3.5 text-neutral-500" strokeWidth={1.5} />
+            <span>Canvas</span>
+          </button>
+
           <SkillIndicator />
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
@@ -505,6 +537,15 @@ export function ChatArea() {
             <div className="pl-0.5 pb-0.5 shrink-0 flex items-center gap-0.5">
               <RagToggle />
               <FileUpload onFilesSelected={handleFilesSelected} disabled={isStreaming} />
+              <button
+                type="button"
+                onClick={() => setPromptLibraryOpen(true)}
+                disabled={isStreaming}
+                className="inline-flex items-center justify-center rounded-full transition-colors hover:bg-accent hover:text-accent-foreground h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 disabled:opacity-50 cursor-pointer"
+                title="Prompt Library"
+              >
+                <BookOpen className="h-5 w-5 text-neutral-500" strokeWidth={1.5} />
+              </button>
             </div>
             
             <textarea
@@ -554,6 +595,10 @@ export function ChatArea() {
       </div>
 
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
+      <PersonaManager open={personaManagerOpen} onClose={() => setPersonaManagerOpen(false)} onSelectPersona={(p) => setActivePersona(p)} />
+      <PromptLibrary open={promptLibraryOpen} onClose={() => setPromptLibraryOpen(false)} onInsertPrompt={(text) => setInput(prev => prev + (prev ? " " : "") + text)} />
+      </div>
+      <CanvasPanel />
     </div>
   );
 }

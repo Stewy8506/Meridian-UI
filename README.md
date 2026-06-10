@@ -13,7 +13,7 @@
   <br />
 </div>
 
-> **The Modern AI Stack:** Next.js 14 · FastAPI · Zustand · SQLAlchemy · SQLite/ChromaDB · sentence-transformers · Recharts
+> **The Modern AI Stack:** Next.js · FastAPI · Zustand · SQLAlchemy · SQLite/ChromaDB · sentence-transformers · Recharts · Monaco Editor
 
 ---
 
@@ -23,49 +23,111 @@ AI Workspace is built for developers, researchers, and power users who demand **
 
 ---
 
-## 🚀 Flagship Features
+## 🚀 Detailed Feature Specifications
 
-### 🌐 Universal Multi-Provider LLM Routing
-Switch seamlessly between **25+ providers** from a single unified interface. 
-- **Native Adapters:** Custom streaming adapters natively support specialized protocols like Claude's `<thinking>` tags, Cohere Chat v2, AWS Bedrock SigV4 auth, and Azure deployment routing.
-- **Provider Health:** Live connection status and per-provider credential management are surfaced directly in your settings dashboard.
+### 📊 Telemetry & Analytics Dashboard (Phase 7)
+Track token usage and expenses with detailed visualization charts.
+*   **Database Table:** `usage_records`
+    *   `id`: `Integer` (Primary Key, Autoincrement)
+    *   `user_id`: `String` (Index)
+    *   `provider`: `String` (Index)
+    *   `model`: `String` (Index)
+    *   `prompt_tokens`: `Integer` (Default: 0)
+    *   `completion_tokens`: `Integer` (Default: 0)
+    *   `latency_ms`: `Float` (Default: 0.0)
+    *   `cost_estimate`: `Float` (Default: 0.0)
+    *   `skill_name`: `String` (Nullable, for skill telemetry tracking)
+    *   `created_at`: `DateTime` (Server default: `now()`)
+*   **Pricing Engine:** Configured in `backend/app/core/pricing.py`. Maps `(provider, model)` to custom input/output costs per 1 million tokens. Falls back to $0.0 for local/Ollama providers, or averages for unrecognized external models.
+*   **Key API Endpoints:**
+    *   `GET /api/analytics/history`: Returns aggregated daily token counts and costs over the last 30 days for trend analysis.
+    *   `GET /api/analytics/skills`: Returns list of skill usage logs, invocation counts, success rates, and average latency.
+*   **Frontend Components:** `/frontend/src/app/analytics/page.tsx`
+    *   Uses `recharts` to render AreaCharts (daily spending and token metrics), PieCharts (provider-cost distribution), and BarCharts (model popularity) dynamically.
 
-### 🧠 Dynamic Skill Engine (Agentic Tools)
-Equip your AI with real-time capabilities. A blazing-fast, two-stage intent router uses keyword heuristics and TF-IDF cosine similarity to dynamically select the best tools for any given prompt, bypassing context window bloat.
-- **Auto-registering:** Drop a Python script in the `skills/builtin/` directory, and it's instantly available.
-- **Built-in arsenal:** Web search (Tavily/Exa), Wikipedia, ArXiv, memory storage/recall, date/time tools, JSON transformations, and more.
-- **Marketplace UI:** Browse, toggle, and live-test your tools right from the dashboard.
+### 🏟️ Model Arena Battle (Arena Mode) (Phase 8A)
+Compare two models side-by-side on the identical prompt with blind evaluation and Elo ratings.
+*   **Database Tables:**
+    *   `arena_matches`: Tracks battle logs (`id`, `user_id`, `prompt`, `model_a`, `model_b`, `winner`, `created_at`).
+    *   `model_ratings`: Tracks competitor ratings (`model_name` [PK], `rating` [Float, starting 1200.0], `matches_played` [Int], `updated_at`).
+*   **Concurrent Streaming Broker:** Encompassed in `backend/app/api/routes/arena.py`. SSE stream endpoint uses `asyncio.Queue` and background task execution to consume parallel generators for Model A and Model B simultaneously, merging outputs dynamically into a single server-sent stream.
+*   **Elo Rating Engine:** Implements the chess Elo formula on voting:
+    $$E_A = \frac{1}{1 + 10^{(R_B - R_A)/400}}$$
+    Updates standings using $K=32$ based on outcome (Model A Win, Model B Win, or Tie).
+*   **Key API Endpoints:**
+    *   `POST /api/arena/battle`: Streams concurrent responses under blind placeholders (`model_a` and `model_b` tags).
+    *   `POST /api/arena/vote`: Logs match vote, updates rating profiles, and reveals true model identities.
+    *   `GET /api/arena/leaderboard`: Lists models sorted by current Elo standings.
+*   **Frontend Components:** `/frontend/src/app/arena/page.tsx`
 
-### 📚 RAG & Knowledge Collections
-Your personal, privacy-first knowledge base.
-- **Format Agnostic:** Upload PDFs, Word docs, Markdown, CSVs, or JSON.
-- **Smart Chunking:** Documents are processed with sentence-aligned overlap to preserve semantic context.
-- **Vector Search:** Embedded locally using `all-MiniLM-L6-v2` (with OpenAI/Gemini fallbacks) and stored in a lightweight SQLite/ChromaDB hybrid backend. Pick and choose which collections to augment on a per-conversation basis.
+### 🎭 Custom AI Personas (Phase 8B)
+Customize AI agents tailored to specific tasks, including prompt injection and default parameters.
+*   **Database Table:** `personas`
+    *   `id`: `String` (Primary Key, UUID)
+    *   `user_id`: `String` (Foreign Key, Null for pre-seeded system presets)
+    *   `name`: `String`
+    *   `avatar`: `String` (Icon identifier or image URL)
+    *   `system_prompt`: `Text`
+    *   `default_model`: `String` (Nullable)
+    *   `temperature`: `Float` (Default: 0.7)
+    *   `greeting`: `Text` (Initial welcome message)
+    *   `is_system_preset`: `Boolean` (Default: False)
+    *   `created_at`: `DateTime`
+*   **Pre-seeded Presets:** Code Reviewer, Technical Interviewer, Scientific Research Assistant, Creative Writer, Socratic Tutor, and Devil's Advocate.
+*   **Key API Endpoints:**
+    *   `GET /api/personas/`: Retrieve both user-defined and system-preset personas.
+    *   `POST /api/personas/`: Create a new custom persona configuration.
+    *   `PUT /api/personas/{id}` & `DELETE /api/personas/{id}`: Modify or delete user personas.
+*   **Frontend Components:** `/frontend/src/components/personas/persona-manager.tsx`
+    *   Integrated into the main Chat window header selector for quick toggle switches between personas, instantly updating system parameters.
 
-### 🎙️ Multimodal & Local Sandbox
-Interact with your AI naturally, and let it work autonomously.
-- **Speech & Vision:** Browser-native Speech-to-Text (Voice Input) and Text-to-Speech (TTS). Drag-and-drop image uploads for vision-enabled models.
-- **Local Python Sandbox:** A completely isolated local code execution environment. Hit "Run Code" on any Python block to execute it via `subprocess` and see `stdout`/`stderr` streamed live directly in your chat.
+### 🔗 Prompt Chains (Workflow Builder) (Phase 8C)
+Set up multi-step pipelines executing linear LLM queries where downstream step prompts compile variables parsed from upstream outputs.
+*   **Database Table:** `workflows`
+    *   `id`: `String` (Primary Key, UUID)
+    *   `user_id`: `String` (Foreign Key)
+    *   `name`: `String`
+    *   `description`: `Text`
+    *   `definition`: `Text` (JSON string serialized representing the steps configuration array)
+    *   `created_at`: `DateTime`
+*   **Step Execution Variable Compilation:** Sequential executor matches double curly brackets `{{step_N_output}}` using regex and replaces them with output text accumulated from the completion of the respective step before initiating the next model run.
+*   **Key API Endpoints:**
+    *   `POST /api/workflows/{id}/run`: Starts execution, running steps sequentially, and streams status updates (`Pending`, `Running`, `Completed`, `Error`) along with generated intermediate text via SSE.
+*   **Frontend Components:** `/frontend/src/app/workflows/page.tsx`
+    *   Provides a step builder form (prompt text, target provider/model, and sequence sorting) and a live runtime panel.
 
-### 📊 Telemetry & Analytics Dashboard
-Track your usage like a pro. A stunning, interactive `recharts`-powered dashboard at `/analytics` provides a bird's-eye view of your metrics:
-- **Cost Estimation:** Calculate precise API costs across different providers.
-- **Latency Tracking:** Monitor average response times to optimize your provider choices.
-- **Usage Breakdown:** Visualize your most-used models and providers via elegant bar and donut charts.
+### 🎨 Resizable Interactive Canvas (Phase 8D)
+A split side-by-side workspace next to the chat screen dedicated to rendering, editing, and checking version diffs of text, markdown, HTML, and diagrams.
+*   **Database Tables:**
+    *   `canvas_documents`: Tracks documents (`id`, `user_id`, `filename`, `content`, `language`, `version`, `updated_at`).
+    *   `canvas_versions`: Tracks historical snapshot checkpoints (`id`, `document_id`, `content`, `version_num`, `created_at`).
+*   **Canvas Built-in Skills:** Exposes `canvas_write` and `canvas_read` tools to the agentic skill engine:
+    *   `canvas_write`: Allows the LLM to write or replace content inside the active canvas.
+    *   `canvas_read`: Allows the LLM to inspect the full contents of the active canvas file.
+*   **Key API Endpoints:**
+    *   `POST /api/canvas/`: Create new document in the canvas workspace.
+    *   `GET /api/canvas/{id}/versions`: Retrieve all saved snapshot diffs for a document.
+    *   `POST /api/canvas/{id}/save`: Push manual editor changes and create a version checkpoint.
+*   **Frontend Components:** `/frontend/src/components/canvas/canvas-panel.tsx`
+    *   Monaco Code Editor (`@monaco-editor/react`) integration featuring syntax highlighting, line wrapping, and multi-format preview tabs: Markdown renderer, sandboxed HTML `<iframe>` preview, and `mermaid` flowchart charts.
+    *   Split-screen version comparator showing code diffs between active edits and historical snapshots.
 
-### 🎨 Infinite Customization & Admin Controls
-Make the workspace truly yours with personalized settings saved to your profile and global admin controls.
-- **Interface Personalization:** Choose custom font sizes, centered or wide layouts, bubble styles, code block behavior, enter-key sending preferences, and streaming text speeds.
-- **Custom CSS Injector:** Write custom CSS selectors directly in the settings menu to override any visual style in the interface.
-- **Dynamic Hotkey Remapping:** Rebind system shortcuts (focus prompt box, open command palette, hide overlays, switch chats, toggle sidebar) dynamically.
-- **Audio Overrides:** Select specialized Text-to-Speech engines (Browser native, OpenAI, ElevenLabs) with customized voice IDs, speed, pitch, and default Speech-to-Text languages.
-- **Workspace Admin Dashboard:** System administrators can toggle registration options, whitelist email domains (CSV format), and view live audit trails of diagnostic system connections (Ollama, Gemini, Vector stores, etc.).
-
-### 🔐 Enterprise-Grade Auth & Persistence
-Security and state management you can trust.
-- **Multi-User Isolation:** JWT authentication with bcrypt password hashing ensures complete privacy.
-- **Encrypted Keys:** Your provider API keys are encrypted at rest using Fernet (AES-128-CBC).
-- **Advanced State:** Pin, tag, branch, and fork conversations. Fully compatible with OpenWebUI history imports.
+### ⚡ Prompt Library Templates (Phase 8E)
+Store template text, parse placeholder tags, and compile prompts dynamically using a compiler form modal.
+*   **Database Table:** `prompt_templates`
+    *   `id`: `String` (Primary Key, UUID)
+    *   `user_id`: `String` (Foreign Key)
+    *   `title`: `String`
+    *   `content`: `Text`
+    *   `variables`: `Text` (JSON-serialized list of placeholder strings parsed, e.g., `["topic", "language"]`)
+    *   `tags`: `Text` (Comma-separated custom categories)
+    *   `created_at`: `DateTime`
+*   **Auto-extraction Engine:** When creating/modifying templates, `backend/app/api/routes/prompts.py` automatically extracts variable placeholder tokens enclosed within double curly brackets (e.g. `{{placeholder_name}}`) using a regex parser.
+*   **Key API Endpoints:**
+    *   `GET /api/prompts/`: Returns saved prompt templates.
+    *   `POST /api/prompts/`: Creates template and returns list of extracted placeholders.
+*   **Frontend Components:** `/frontend/src/components/prompts/prompt-library.tsx`
+    *   A template gallery overlay. Clicking a template prompts the user with an input form displaying fields for each extracted variable, compiles the final prompt, and inserts it into the active chat textarea.
 
 ---
 
@@ -75,9 +137,9 @@ Security and state management you can trust.
 AI Workspace/
 ├── backend/                  # High-performance FastAPI ASGI service
 │   └── app/
-│       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, docs, analytics)
-│       ├── core/             # JWT config, security utilities, Fernet encryption
-│       ├── database/         # SQLAlchemy schemas (User, Conversation, Message, Memory, UserApiKey)
+│       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, docs, analytics, canvas, workflows, arena, prompts, personas)
+│       ├── core/             # JWT config, security utilities, Fernet encryption, pricing tiers
+│       ├── database/         # SQLAlchemy schemas (User, Conversation, Message, Memory, UserApiKey, usage_records, personas, workflows, canvas, prompts)
 │       ├── providers/        # LLM streaming adapters (OpenAI-compat, Anthropic, Cohere, Bedrock)
 │       ├── rag/              # Document processor, local embeddings, vector store, semantic retriever
 │       ├── sandbox/          # Secure Python code execution sandbox (`subprocess` runner)
@@ -86,8 +148,8 @@ AI Workspace/
 │
 ├── frontend/                 # Responsive, modern Next.js React application
 │   └── src/
-│       ├── app/              # App Router pages (Chat, Analytics, Settings)
-│       ├── components/       # Reusable UI (MessageBubbles, CodeEditors, Dashboards, CommandPalette)
+│       ├── app/              # App Router pages (Chat, Analytics, Settings, Arena, Workflows)
+│       ├── components/       # UI Components (CanvasPanel, PromptLibrary, PersonaManager, CodeEditors)
 │       ├── lib/              # API client (Automatic JWT injection, 401 handling, refresh flows)
 │       └── store/            # Zustand global state management (app state, themes, auth)
 │
