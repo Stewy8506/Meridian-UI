@@ -6,7 +6,6 @@ import {
   PieChart, Pie, Cell, AreaChart, Area, CartesianGrid
 } from "recharts";
 import { Loader2, Activity, Coins, Zap, Settings, BarChart2 } from "lucide-react";
-import { Sidebar } from "@/components/layout/sidebar";
 import { getBaseUrl } from "@/lib/api-client";
 
 interface AnalyticsSummary {
@@ -80,9 +79,7 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto w-full select-none">
+    <div className="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto w-full select-none">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-neutral-200">Analytics Dashboard</h1>
@@ -313,7 +310,6 @@ export default function AnalyticsPage() {
 
           </div>
         )}
-      </main>
     </div>
   );
 }

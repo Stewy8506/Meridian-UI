@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sidebar } from "@/components/layout/sidebar";
 import { apiRequest, getBaseUrl } from "@/lib/api-client";
 import { toast } from "@/components/ui/toast";
 import { 
@@ -234,9 +233,7 @@ export default function ArenaPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6 max-w-6xl mx-auto w-full select-none relative">
+    <div className="flex-1 overflow-y-auto p-6 max-w-6xl mx-auto w-full select-none relative">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-neutral-200 flex items-center gap-2">
@@ -515,7 +512,6 @@ export default function ArenaPage() {
           </div>
 
         </div>
-      </main>
     </div>
   );
 }

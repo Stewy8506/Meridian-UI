@@ -201,5 +201,8 @@ async def get_models(
         models = await provider_instance.get_models()
         return {"models": models}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import logging
+        logging.getLogger("app.api.routes.chat").warning(f"Failed to fetch models for {provider}: {e}")
+        return {"models": []}
+
 
