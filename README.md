@@ -53,6 +53,14 @@ Track your usage like a pro. A stunning, interactive `recharts`-powered dashboar
 - **Latency Tracking:** Monitor average response times to optimize your provider choices.
 - **Usage Breakdown:** Visualize your most-used models and providers via elegant bar and donut charts.
 
+### 🎨 Infinite Customization & Admin Controls
+Make the workspace truly yours with personalized settings saved to your profile and global admin controls.
+- **Interface Personalization:** Choose custom font sizes, centered or wide layouts, bubble styles, code block behavior, enter-key sending preferences, and streaming text speeds.
+- **Custom CSS Injector:** Write custom CSS selectors directly in the settings menu to override any visual style in the interface.
+- **Dynamic Hotkey Remapping:** Rebind system shortcuts (focus prompt box, open command palette, hide overlays, switch chats, toggle sidebar) dynamically.
+- **Audio Overrides:** Select specialized Text-to-Speech engines (Browser native, OpenAI, ElevenLabs) with customized voice IDs, speed, pitch, and default Speech-to-Text languages.
+- **Workspace Admin Dashboard:** System administrators can toggle registration options, whitelist email domains (CSV format), and view live audit trails of diagnostic system connections (Ollama, Gemini, Vector stores, etc.).
+
 ### 🔐 Enterprise-Grade Auth & Persistence
 Security and state management you can trust.
 - **Multi-User Isolation:** JWT authentication with bcrypt password hashing ensures complete privacy.

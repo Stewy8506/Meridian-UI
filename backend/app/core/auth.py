@@ -48,7 +48,8 @@ def get_current_user(
                 email="guest@workspace.local",
                 username="Guest",
                 hashed_password=get_password_hash("guest-no-password"),
-                is_active=True
+                is_active=True,
+                is_admin=True
             )
             db.add(mock_user)
             db.commit()

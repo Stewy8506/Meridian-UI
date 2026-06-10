@@ -47,7 +47,7 @@ async def signup(payload: UserRegister, db: Session = Depends(get_db)):
         return {
             "access_token": "not-needed",
             "token_type": "bearer",
-            "user": {"id": "default_user", "email": "guest@workspace.local", "username": "Guest"}
+            "user": {"id": "default_user", "email": "guest@workspace.local", "username": "Guest", "is_admin": True}
         }
 
     # Check if user already exists
@@ -59,11 +59,13 @@ async def signup(payload: UserRegister, db: Session = Depends(get_db)):
         )
 
     # Create new user
+    is_first = db.query(User).count() == 0
     user = User(
         email=payload.email,
         username=payload.username,
         hashed_password=get_password_hash(payload.password),
-        is_active=True
+        is_active=True,
+        is_admin=is_first
     )
     db.add(user)
     db.commit()
@@ -74,7 +76,7 @@ async def signup(payload: UserRegister, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "email": user.email, "username": user.username}
+        "user": {"id": user.id, "email": user.email, "username": user.username, "is_admin": user.is_admin}
     }
 
 @router.post("/login", response_model=TokenResponse)
@@ -85,7 +87,7 @@ async def login(payload: UserLogin, db: Session = Depends(get_db)):
         return {
             "access_token": "not-needed",
             "token_type": "bearer",
-            "user": {"id": "default_user", "email": "guest@workspace.local", "username": "Guest"}
+            "user": {"id": "default_user", "email": "guest@workspace.local", "username": "Guest", "is_admin": True}
         }
 
     user = db.query(User).filter(User.email == payload.email).first()
@@ -99,7 +101,7 @@ async def login(payload: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "email": user.email, "username": user.username, "avatar_url": user.avatar_url}
+        "user": {"id": user.id, "email": user.email, "username": user.username, "avatar_url": user.avatar_url, "is_admin": user.is_admin}
     }
 
 @router.get("/me")
@@ -110,7 +112,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "username": current_user.username,
         "avatar_url": current_user.avatar_url,
-        "is_guest": not settings.AUTH_ENABLED
+        "is_guest": not settings.AUTH_ENABLED,
+        "is_admin": current_user.is_admin
     }
 
 @router.put("/me")
@@ -126,7 +129,7 @@ async def update_me(payload: UserUpdate, current_user: User = Depends(get_curren
                 guest_user.avatar_url = payload.avatar_url
             db.commit()
             db.refresh(guest_user)
-            return {"id": guest_user.id, "email": guest_user.email, "username": guest_user.username, "avatar_url": guest_user.avatar_url}
+            return {"id": guest_user.id, "email": guest_user.email, "username": guest_user.username, "avatar_url": guest_user.avatar_url, "is_admin": True}
         raise HTTPException(status_code=404, detail="Guest user not initialized")
 
     if payload.username:
@@ -140,5 +143,6 @@ async def update_me(payload: UserUpdate, current_user: User = Depends(get_curren
         "id": current_user.id,
         "email": current_user.email,
         "username": current_user.username,
-        "avatar_url": current_user.avatar_url
+        "avatar_url": current_user.avatar_url,
+        "is_admin": current_user.is_admin
     }

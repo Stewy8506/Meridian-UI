@@ -7,6 +7,7 @@ export interface UserProfile {
   username: string;
   avatar_url?: string;
   is_guest?: boolean;
+  is_admin?: boolean;
 }
 
 interface AuthState {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { apiRequest } from '@/lib/api-client';
 
 export interface Message {
   role: 'user' | 'assistant';
@@ -46,6 +47,40 @@ interface AppState {
   topP: number;
   maxTokens: number;
 
+  // Infinite Customization - User Interface Preferences
+  fontSize: number;
+  chatLayout: 'centered' | 'wide';
+  bubbleStyle: 'bubble' | 'flat' | 'classic';
+  enterKeyBehavior: 'send' | 'newline';
+  streamSpeed: number; // 1 to 10
+  codeBlocksCollapsed: boolean;
+  customCss: string;
+
+  // Infinite Customization - Inference Settings overrides
+  frequencyPenalty: number;
+  presencePenalty: number;
+  stopSequences: string[];
+  contextLength: number;
+  seed: number;
+
+  // Infinite Customization - Audio Settings
+  ttsEngine: 'browser' | 'openai' | 'elevenlabs';
+  ttsVoiceId: string;
+  ttsSpeed: number;
+  ttsPitch: number;
+  autoSpeak: boolean;
+  sttLanguage: string;
+
+  // Shortcuts settings map
+  shortcuts: {
+    commandPalette: string;
+    newChat: string;
+    toggleSidebar: string;
+    focusInput: string;
+    switchChats: string;
+    closeOverlays: string;
+  };
+
   setProvider: (provider: string) => void;
   setModel: (model: string) => void;
   toggleSidebar: () => void;
@@ -85,6 +120,10 @@ interface AppState {
   setTemperature: (temp: number) => void;
   setTopP: (val: number) => void;
   setMaxTokens: (val: number) => void;
+
+  // Infinite Settings sync
+  syncWithServer: () => Promise<void>;
+  updateUserSettings: (newSettings: Partial<AppState>) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -111,6 +150,40 @@ export const useAppStore = create<AppState>()(
       temperature: 0.7,
       topP: 0.9,
       maxTokens: 2048,
+
+      // Infinite Customization - User Interface Defaults
+      fontSize: 14,
+      chatLayout: 'centered',
+      bubbleStyle: 'bubble',
+      enterKeyBehavior: 'send',
+      streamSpeed: 5,
+      codeBlocksCollapsed: false,
+      customCss: '',
+
+      // Infinite Customization - Inference Settings defaults
+      frequencyPenalty: 0.0,
+      presencePenalty: 0.0,
+      stopSequences: [],
+      contextLength: 4096,
+      seed: 0,
+
+      // Infinite Customization - Audio Defaults
+      ttsEngine: 'browser',
+      ttsVoiceId: 'default',
+      ttsSpeed: 1.0,
+      ttsPitch: 1.0,
+      autoSpeak: false,
+      sttLanguage: 'en-US',
+
+      // Shortcuts defaults
+      shortcuts: {
+        commandPalette: 'ctrl+k',
+        newChat: 'ctrl+n',
+        toggleSidebar: 'ctrl+shift+s',
+        focusInput: 'ctrl+/',
+        switchChats: 'alt+1-9',
+        closeOverlays: 'esc',
+      },
 
       setProvider: (provider) => set({ provider }),
       setModel: (model) => set({ model }),
@@ -314,6 +387,77 @@ export const useAppStore = create<AppState>()(
           }
         };
       }),
+
+      syncWithServer: async () => {
+        try {
+          const userSettings = await apiRequest<any>('/api/settings/user');
+          if (userSettings) {
+            set({
+              fontSize: userSettings.fontSize ?? 14,
+              chatLayout: userSettings.chatLayout ?? 'centered',
+              bubbleStyle: userSettings.bubbleStyle ?? 'bubble',
+              theme: userSettings.theme ?? 'dark',
+              enterKeyBehavior: userSettings.enterKeyBehavior ?? 'send',
+              streamSpeed: userSettings.streamSpeed ?? 5,
+              codeBlocksCollapsed: userSettings.codeBlocksCollapsed ?? false,
+              customCss: userSettings.customCss ?? '',
+              
+              // Inference settings mapping
+              frequencyPenalty: userSettings.frequencyPenalty ?? 0.0,
+              presencePenalty: userSettings.presencePenalty ?? 0.0,
+              stopSequences: userSettings.stopSequences ?? [],
+              contextLength: userSettings.contextLength ?? 4096,
+              seed: userSettings.seed ?? 0,
+              
+              // Audio settings mapping
+              ttsEngine: userSettings.ttsEngine ?? 'browser',
+              ttsVoiceId: userSettings.ttsVoiceId ?? 'default',
+              ttsSpeed: userSettings.ttsSpeed ?? 1.0,
+              ttsPitch: userSettings.ttsPitch ?? 1.0,
+              autoSpeak: userSettings.autoSpeak ?? false,
+              sttLanguage: userSettings.sttLanguage ?? 'en-US',
+              
+              // Shortcuts mapping
+              shortcuts: userSettings.shortcuts ?? {
+                commandPalette: 'ctrl+k',
+                newChat: 'ctrl+n',
+                toggleSidebar: 'ctrl+shift+s',
+                focusInput: 'ctrl+/',
+                switchChats: 'alt+1-9',
+                closeOverlays: 'esc',
+              }
+            });
+
+            // Apply theme class to document element
+            if (typeof window !== 'undefined') {
+              const root = window.document.documentElement;
+              const currentTheme = userSettings.theme ?? 'dark';
+              if (currentTheme === 'system') {
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                root.classList.remove('light', 'dark');
+                root.classList.add(systemTheme);
+              } else {
+                root.classList.remove('light', 'dark');
+                root.classList.add(currentTheme);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to sync settings with server:", err);
+        }
+      },
+
+      updateUserSettings: async (newSettings: any) => {
+        set(newSettings);
+        try {
+          await apiRequest('/api/settings/user', {
+            method: 'POST',
+            body: JSON.stringify({ settings: newSettings })
+          });
+        } catch (err) {
+          console.error("Failed to save user settings to server:", err);
+        }
+      },
     }),
     {
       name: 'ai-workspace-storage',

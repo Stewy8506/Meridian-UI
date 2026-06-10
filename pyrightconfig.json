@@ -1,6 +1,9 @@
 {
-  "venvPath": "backend",
+  "venvPath": "c:\\Users\\dasan\\Documents\\AI App\\backend",
   "venv": "venv",
+  "extraPaths": [
+    "backend"
+  ],
   "include": [
     "backend"
   ]

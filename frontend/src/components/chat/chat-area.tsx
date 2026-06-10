@@ -495,7 +495,7 @@ export function ChatArea() {
 
       {/* Input */}
       <div className="p-4 pt-2 shrink-0">
-        <div className="max-w-2xl mx-auto relative border border-border rounded-xl bg-card focus-within:border-foreground/20 transition-colors spotlight-border overflow-hidden">
+        <div className="max-w-2xl mx-auto relative border border-border rounded-xl bg-card focus-within:border-foreground/20 transition-colors spotlight-border">
           <FileAttachmentList files={attachments} onRemove={removeAttachment} />
           <form 
             onSubmit={handleSubmit}

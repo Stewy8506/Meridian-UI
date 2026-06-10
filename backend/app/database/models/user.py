@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Text, Integer
+from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Text, Integer, JSON
 from sqlalchemy.orm import relationship, declarative_base
 from cryptography.fernet import Fernet
 from app.core.config import settings
@@ -16,6 +16,8 @@ class User(Base):
     avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False) # Admin workspace permissions
+    settings = Column(JSON, nullable=True) # Synced user configurations
     
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
