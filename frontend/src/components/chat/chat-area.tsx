@@ -13,6 +13,7 @@ import { SuggestedPrompts } from "./suggested-prompts";
 import { CommandPalette } from "../ui/command-palette";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { motion, AnimatePresence } from "framer-motion";
+import { SkillIndicator } from "../skills/skill-indicator";
 
 export function ChatArea() {
   const { 
@@ -89,12 +90,12 @@ export function ChatArea() {
   // Auto-title generation background request
   const generateChatTitle = async (chatId: string, userMsg: string, assistantMsg: string) => {
     try {
-      const activeKey = provider === 'google' ? googleApiKey : provider === 'openai' ? openaiApiKey : '';
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
       const response = await fetch("http://localhost:8000/api/chat/completions", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${activeKey || 'not-needed'}`
+          "Authorization": `Bearer ${token || 'not-needed'}`
         },
         body: JSON.stringify({
           provider,
@@ -173,12 +174,12 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
-        const activeKey = provider === 'google' ? googleApiKey : provider === 'openai' ? openaiApiKey : '';
+        const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
         const response = await fetch("http://localhost:8000/api/chat/completions", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${activeKey || 'not-needed'}`
+            "Authorization": `Bearer ${token || 'not-needed'}`
           },
           body: JSON.stringify({
             provider,
@@ -363,14 +364,18 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
           </div>
         </div>
 
-        {/* Command Palette trigger */}
-        <button
-          onClick={() => setIsCommandPaletteOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 border border-border/80 hover:border-border rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-all cursor-pointer"
-        >
-          <span className="text-[10px]">Command Menu</span>
-          <kbd className="px-1 bg-muted border border-border rounded text-[9px] font-mono">⌘K</kbd>
-        </button>
+        {/* Header Actions */}
+        <div className="flex items-center gap-2">
+          <SkillIndicator />
+          {/* Command Palette trigger */}
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-border/80 hover:border-border rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-all cursor-pointer"
+          >
+            <span className="text-[10px]">Command Menu</span>
+            <kbd className="px-1 bg-muted border border-border rounded text-[9px] font-mono">⌘K</kbd>
+          </button>
+        </div>
       </header>
 
       {/* Connection retry banner */}

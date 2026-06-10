@@ -19,6 +19,17 @@ class Settings(BaseSettings):
     # DB
     DATABASE_URL: str = "sqlite:///./workspace.db"
 
+    # Auth & Security settings
+    AUTH_ENABLED: bool = False
+    AUTH_SECRET_KEY: str = "supersecretjwtkeyforlocaldevelopmentonly"
+    ENCRYPTION_KEY: str | None = None
+    
+    # Skills settings
+    SKILL_TOP_K: int = 8
+    
+    # Defaults
+    DEFAULT_PROVIDER: str = "local"
+
     model_config = SettingsConfigDict(env_file=(".env", ".env.local"), case_sensitive=True)
 
 settings = Settings()

@@ -1,152 +1,166 @@
-# 🚀 AI Chat Workspace
+# 🚀 AI Workspace (Premium Operating Environment)
 
-A production-grade, highly extensible AI chat web application inspired by ChatGPT, Open WebUI, and modern AI operating systems. It is built from the ground up to offer low-latency streaming responses, immediate switching between local and cloud providers, an extensible tool calling architecture, and a premium modern user experience.
+A self-hosted, production-grade AI operating environment and orchestration workspace that runs entirely locally or in the cloud. It features dynamic multi-provider routing, a retrieval-gated scalable skill engine, JWT authentication, and secure, encrypted-at-rest server-side API key persistence.
 
 ---
 
-## ✨ Features
+## 🎨 Phase 1 — Premium UI Overhaul
 
-- **🌓 Premium Dark Mode UI**: A fully-responsive, high-contrast user interface styled using **Tailwind CSS v4** and fluid, micro-animated transitions powered by **Framer Motion**.
-- **🔄 Multi-Provider Orchestration**: Switch dynamically between local and cloud models.
-  - **Local Models**: Preconfigured to integrate seamlessly with **LM Studio** (tested on `Stheno` and `Qwen 2.5`) and other OpenAI-compatible local APIs.
-  - **Cloud Providers**: Integrates with **Google AI Studio (Gemma 4)** and **OpenAI APIs** via OpenAI's standardized SDK formats.
-- **⚡ SSE Streaming Engine**: Real-time token streaming using high-performance Server-Sent Events (SSE) on FastAPI, rendering instantly on the frontend.
-- **🛠️ Extensible Tool Registry**: Modular tool architecture starting with a built-in **Web Search** tool blueprint, facilitating easy additions of customized agentic tools.
-- **🗄️ Structured State & Storage**: 
-  - **Frontend**: Global responsive application states managed using **Zustand** with persistent client storage.
-  - **Backend**: Data architecture defined via **SQLAlchemy** ready for local **SQLite** (or easily migratable to PostgreSQL/MySQL).
+The user interface has been transformed into a sophisticated, fluid operating canvas with the following features:
+
+- **🌓 theme-toggle.tsx**: Animated toggle for Dark, Light, and System modes that persists settings to localStorage and the Zustand store, applying `.dark` or `.light` classes to the document root.
+- **🔍 command-palette.tsx**: A global Raycast-style shortcut (`Ctrl+K` / `Cmd+K`) supporting arrow key navigation, recent actions, search over conversations, switching models, switching providers, toggling themes, and entering settings.
+- **toast.tsx**: Stacking, auto-dismissing toast notifications with progress bars for successes, warnings, and error indicators.
+- **📁 sidebar.tsx**:
+  - Drag-and-drop foldering organization and pinning of favorite chats.
+  - Search filter bar at the top of the conversation list.
+  - Chronological chat grouping ("Today", "Yesterday", "This Week", "Older").
+  - Expandable/collapsible sidebar transition animations.
+  - Bottom avatar area reflecting user login profile status.
+- **💬 chat-area.tsx**:
+  - **Message hover toolbar**: Actions to copy text, edit user messages, regenerate assistant responses, and record 👍/👎 reactions for analytics.
+  - **Edit & Resend**: Click to edit previous user prompts, clearing and regenerating answers from that branch.
+  - **Blinking streaming cursor**: Blinking cursor indicating processing state.
+  - **Stop generation**: Instant cancellation of ongoing LLM stream calls.
+  - **Suggested prompts**: Categorized starter cards (Creative, Code, Analysis, Writing, Research) in an empty workspace state.
+  - **Scroll-to-bottom FAB**: Floating action button with a new message badge indicator.
+  - Message timestamps displaying relative time.
+- **👤 message-bubble.tsx**: Extracted layout containing provider logo branding (Google, OpenAI, Anthropic, Local), AnimatePresence transition entries, and a thinking shimmer while waiting for token responses.
+- **💻 code-block.tsx**: Advanced code block renderer supporting copy-to-clipboard animations, syntax highlighting, line numbers toggling, and collapsible structures for codes exceeding 30 lines.
+- **⚙️ settings-dialog.tsx**: Full-page tabbed settings dashboard (General, Providers, Models, Skills, Appearance, Keyboard Shortcuts, About) with connection status indicators (connected ✓ / not configured ⚠️), temperature/top-p/max-tokens sliders, system prompt editors, and settings export/import JSON hooks.
+- **⌨️ use-keyboard-shortcuts.ts**: Shortcuts tracking system:
+  - `Ctrl+K`: Command menu
+  - `Ctrl+N`: New conversation
+  - `Ctrl+Shift+S`: Sidebar toggling
+  - `Ctrl+/`: Focus input prompt
+  - `Alt+1-9`: Switch active chats by index
+  - `Ctrl+?`: Shortcut cheat sheet overlay
+
+---
+
+## 🛠️ Phase 2 — Scalable Skill Engine
+
+A retrieval-gated, dynamic skill runner capable of scaling to thousands of integrations.
+
+- **base.py & categories.py**: Standardized abstract skill interface (`BaseSkill`) and category enums (WEB, CODE, DATA, FILE, IMAGE, AUDIO, COMMUNICATION, KNOWLEDGE, SYSTEM, UTILITY) supporting timeout controls, config checks, and schemas.
+- **registry.py**: Scans the `skills/builtin/` directory on server startup, registers descriptions and metadata into the SQLite database, and lazy-loads python code modules on-demand.
+- **router.py**: Two-stage intent classification. Stage 1 uses keyword heuristics to find candidate categories. Stage 2 executes TF-IDF cosine similarity search over descriptions to bind only the top-K relevant skill schemas (default 8) to the LLM tool context.
+- **executor.py**: Async executor enforcing timeouts (default 30s), logging durations/success status, capturing stdout/stderr, and formatting traceback exceptions.
+- **skills.py API Routes**:
+  - `GET /api/skills`: Paginate, search, and filter skills.
+  - `GET /api/skills/{name}`: Get skill parameters and schema.
+  - `PUT /api/skills/{name}/enable` & `/disable`: Toggle capability activation.
+  - `GET /api/skills/categories`: Retrieve categorized totals summary.
+  - `POST /api/skills/{name}/test`: Direct skill run execution helper.
+- **skill-marketplace.tsx**: Full-page marketplace browser enabling category filtering, search, state toggling, and a live testing panel for running skills with custom JSON inputs.
+- **skill-indicator.tsx**: Header dropdown chip listing enabled capabilities.
+- **skill-result.tsx**: Renders collapsible execution metrics, success badges, elapsed execution time, and raw outputs inside the chat bubble list.
+- **🔌 Discovered Capabilities**:
+  - `web_search`: Search using Tavily or Exa engine.
+  - `wikipedia`: Fetch historical details and summaries.
+  - `arxiv_search`: Retrieve scholarly documents.
+  - `calculator`: Safely compute math equations.
+  - `datetime_tool`: Format current date/time and timezone configurations.
+  - `uuid_generate`: Generate secure keys and random hashes.
+  - `json_transform`: Query/parse JSON arrays.
+  - `memory_store` & `memory_recall`: Read and write facts to the user's sqlite database profile.
+
+---
+
+## 🔐 Phase 3 — Authentication & Server-Side Persistence
+
+A secure persistence layer for multiple users.
+
+- **auth.py**: Password cryptography hashing via `bcrypt` and JWT bearer token creation and parsing.
+- **user.py (Database Model)**: Defines schemas for `User`, `UserApiKey` (encrypted at rest), and `Memory` tables.
+- **conversation.py (Database Model)**: Extends standard parameters to store `user_id`, `system_prompt`, model/provider selections, pinning state, tag list, and `Message.extra_metadata` JSON.
+- **auth.py (API Routes)**: User signup, login, status check, and profile me update routes.
+- **api_keys.py (API Routes)**: Securely saves user's provider API keys encrypted on the server utilizing base64 Fernet cryptography.
+- **conversations.py (API Routes)**: CRUD handlers for persistent chat history, branching/forking chats, and importing OpenWebUI-formatted history dumps.
+- **api-client.ts**: Standard fetch wrapper with automatic JWT injection and 401 logout redirect triggers.
+- **auth-store.ts**: State store managing authenticated profiles and login redirects.
+- **login-page.tsx**: Modern dark-themed signup/signin card overlay.
+- **auth-provider.tsx**: Client component wrapping root views, showing a loader spinner during initial token verification, and displaying the login overlay when auth is required.
 
 ---
 
 ## 🏛️ Project Architecture
 
-The application is split into two cleanly separated microservices within a single workspace:
-
 ```
-AI App/
-├── backend/            # FastAPI Backend Service (Python 3.10+)
+AI Workspace/
+├── backend/            # FastAPI ASGI Backend Service
 │   ├── app/
-│   │   ├── api/        # REST Route mappings (SSE stream completions)
-│   │   ├── core/       # Global Pydantic settings & database engines
-│   │   ├── database/   # Declarative models (Conversations & Messages)
-│   │   ├── providers/  # Abstracted LLM clients (OpenAI, Local, Google)
-│   │   ├── tools/      # Modular tools & registry systems
-│   │   └── main.py     # FastAPI entry point
+│   │   ├── api/        # Endpoint routers (auth, chat, keys, skills, conversations)
+│   │   ├── core/       # Security utilities, JWT setups, and configs
+│   │   ├── database/   # Declarative SQLAlchemy SQLite models
+│   │   ├── providers/  # Abstracted LLM clients (OpenAI, Gemini, Local)
+│   │   ├── skills/     # Skill Engine (builtin category subpackages & executor)
+│   │   └── main.py     # FastAPI server entry point
 │   ├── venv/           # Python virtual environment
-│   └── requirements.txt# Backend dependency manifest
+│   └── requirements.txt# Backend dependencies (cryptography, jwt, passlib, etc.)
 │
-├── frontend/           # Next.js Frontend App (React 19, TypeScript)
+├── frontend/           # Next.js Frontend Application
 │   ├── src/
-│   │   ├── components/ # Atomic UI components (ChatArea, Sidebar, Settings)
-│   │   ├── lib/        # Tailwind class merges & visual helpers
-│   │   ├── store/      # Zustand state store
-│   │   └── app/        # Next.js App router pages
-│   └── package.json    # Frontend dependency manifest
+│   │   ├── app/        # Page routing & global styling
+│   │   ├── components/ # UI panels (auth, chat, settings, skills)
+│   │   ├── lib/        # API client fetch handlers & class merges
+│   │   └── store/      # Zustand state managers (app, auth)
+│   └── package.json    # Frontend dependency manifests
 │
-├── package.json        # Root Workspace Configuration (NPM Scripts)
-├── run-dev.js          # Root process orchestrator & runner
-└── README.md           # Project Documentation
-```
-
----
-
-## ⚙️ Configuration & Environment
-
-To use cloud models, create a `.env` file in the `backend/` directory based on the provided template:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Open `backend/.env` and supply your API keys:
-```env
-# Provider API Keys
-GOOGLE_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Local Provider Config (e.g. LM Studio server address)
-LOCAL_PROVIDER_URL=http://localhost:1234/v1
-
-# Database Configuration (defaults to SQLite local workspace file)
-DATABASE_URL=sqlite:///./workspace.db
+├── package.json        # Root scripts manifest
+└── run-dev.js          # Root concurrent process runner
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### The 1-Step Unified Runner (Recommended)
+### 1. Environment Setup
 
-Start both servers concurrently with a single command from the project root:
+Configure backend keys and database locations in `backend/`:
+```bash
+cd backend
+cp .env.example .env
+```
 
+Supply keys and authentication secrets in `backend/.env`:
+```env
+# Server-side Auth Options
+AUTH_ENABLED=True
+AUTH_SECRET_KEY=generate_a_secure_jwt_secret_signing_key_here
+ENCRYPTION_KEY=generate_a_secure_32_byte_base64_encryption_key_here
+
+# Provider APIs
+OPENAI_API_KEY=your_openai_key_here
+GOOGLE_API_KEY=your_gemini_key_here
+
+# Search Engine APIs
+TAVILY_API_KEY=your_tavily_key_here
+EXA_API_KEY=your_exa_key_here
+```
+
+---
+
+### 2. Spawning Servers
+
+Run both the Next.js client and FastAPI server concurrently from the root directory:
 ```bash
 npm run dev:all
 ```
-
-This custom runner automatically:
-1. Spawns the **FastAPI Backend** (`http://localhost:8000`) using the virtual environment's internal executables.
-2. Spawns the **Next.js Frontend** (`http://localhost:5000`).
-3. Formats and color-codes console logs into a single window.
-4. Cleanly handles graceful shutdown of both services upon pressing `Ctrl + C`.
+- Frontend starts at **`http://localhost:5000`** (Next.js client-side interface).
+- Backend starts at **`http://localhost:8000`** (FastAPI documentation at `/docs`).
 
 ---
 
-### Running Separately (Alternative)
+## 🧪 Verification & Development
 
-If you prefer running the components in separate terminal sessions:
-
-#### 📂 1. Run the Backend
-
+Run compilation checks and unit tests to verify stability:
 ```bash
+# Verify backend compiles and imports cleanly
 cd backend
-# Activate the virtual environment
-.\venv\Scripts\activate   # On Windows (PowerShell: Activate.ps1)
-# Install dependencies
-pip install -r requirements.txt
-# Run the FastAPI ASGI server
-uvicorn app.main:app --reload --port 8000
-```
+.\venv\Scripts\python -c "import app.main; print('Backend loaded successfully!')"
 
-#### 📂 2. Run the Frontend
-
-```bash
+# Run type checking and production frontend builds
 cd frontend
-# Run the dev server
-npm run dev
+npm run build
 ```
-
-Your web client will be available at **`http://localhost:5000`**.
-
----
-
-## 🔌 Extensibility: Adding a Custom Tool
-
-Adding a tool to your AI Workspace is exceptionally simple:
-
-1. **Create the Tool**: Create a new class extending `BaseTool` in `backend/app/tools/`:
-   ```python
-   # backend/app/tools/weather.py
-   from app.tools.base import BaseTool
-
-   class WeatherTool(BaseTool):
-       name = "get_weather"
-       description = "Get current weather details for a specific city."
-
-       async def execute(self, city: str) -> str:
-           # Call your external weather API here
-           return f"The current weather in {city} is sunny and 22°C."
-   ```
-
-2. **Register the Tool**: Add it to the registry in `backend/app/tools/registry.py`:
-   ```python
-   # Import the tool
-   from app.tools.weather import WeatherTool
-   
-   # Add to the registry inside get_all_tools() or initialization logic
-   ```
-
----
-
-## 📄 License
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

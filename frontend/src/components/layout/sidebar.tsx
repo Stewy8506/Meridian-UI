@@ -5,13 +5,14 @@ import { cn } from "@/lib/utils";
 import { 
   MessageSquare, Settings, Plus, LayoutPanelLeft, 
   Trash2, Pin, Folder, FolderPlus, Search, 
-  ChevronDown, ChevronRight, MoreVertical, X, FolderMinus
+  ChevronDown, ChevronRight, MoreVertical, X, FolderMinus, Wrench
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { toast } from "@/components/ui/toast";
+import { useAuthStore } from "@/store/auth-store";
 
 export function Sidebar() {
   const { 
@@ -28,8 +29,12 @@ export function Sidebar() {
     createFolder,
     deleteFolder,
     addChatToFolder,
-    removeChatFromFolder
+    removeChatFromFolder,
+    currentView,
+    setView
   } = useAppStore();
+
+  const { user, logout, isAuthEnabled } = useAuthStore();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -253,9 +258,36 @@ export function Sidebar() {
 
         {/* Action Controls */}
         <div className="p-3 space-y-2 shrink-0">
+          <div className="flex gap-1 p-0.5 bg-muted/40 border border-border/40 rounded-xl select-none">
+            <button
+              onClick={() => setView('chat')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold cursor-pointer transition-all",
+                currentView === 'chat'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Workspace
+            </button>
+            <button
+              onClick={() => setView('marketplace')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold cursor-pointer transition-all",
+                currentView === 'marketplace'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              Marketplace
+            </button>
+          </div>
+
           <button 
-            onClick={() => createChat()}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-xs md:text-sm font-semibold transition-all shadow-sm active:scale-98 select-none"
+            onClick={() => { setView('chat'); createChat(); }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-xs md:text-sm font-semibold transition-all shadow-sm active:scale-98 select-none cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             New Conversation
@@ -439,22 +471,32 @@ export function Sidebar() {
         <div className="p-3 border-t border-border/50 shrink-0 bg-muted/10 flex flex-col gap-2 select-none">
           <div className="flex items-center justify-between select-none">
             {/* User Profile avatar */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-400">
-                Ω
+            <div className="flex items-center gap-2 max-w-[170px] truncate">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-bold text-xs text-purple-400 uppercase shrink-0">
+                {user?.username?.charAt(0) || "U"}
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-foreground leading-tight">Admin User</span>
-                <span className="text-[10px] text-muted-foreground leading-none">Local Mode</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-semibold text-foreground leading-tight truncate">{user?.username || "Guest User"}</span>
+                <span className="text-[10px] text-muted-foreground leading-none truncate">{user?.email || "guest@local"}</span>
               </div>
             </div>
             
-            <ThemeToggle />
+            <div className="flex items-center gap-1.5">
+              {isAuthEnabled && (
+                <button 
+                  onClick={logout} 
+                  className="text-[10px] text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors font-medium border border-white/5 hover:border-rose-500/20 px-2 py-1 rounded-lg bg-zinc-950/20 shrink-0"
+                >
+                  Logout
+                </button>
+              )}
+              <ThemeToggle />
+            </div>
           </div>
 
           <button 
             onClick={() => setSettingsOpen(true)} 
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all text-left font-semibold"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all text-left font-semibold cursor-pointer"
           >
             <Settings className="w-4.5 h-4.5 shrink-0" />
             Settings Console

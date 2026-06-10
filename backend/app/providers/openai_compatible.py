@@ -25,8 +25,10 @@ class OpenAICompatibleProvider(BaseProvider):
         exa_api_key = kwargs.pop("exa_api_key", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
-        from app.tools.registry import tool_registry
-        tools = tool_registry.get_all_schemas()
+        tools = kwargs.get("tools")
+        if tools is None:
+            from app.skills.router import skill_router
+            tools = skill_router.get_relevant_skills(messages)
         
         async with httpx.AsyncClient() as client:
             payload = {
@@ -65,16 +67,20 @@ class OpenAICompatibleProvider(BaseProvider):
                     except json.JSONDecodeError:
                         args = {}
                         
-                    tool = tool_registry.get_tool(tool_name)
-                    if tool:
-                        tool_result = await tool.execute(
-                            search_provider=search_provider,
-                            tavily_api_key=tavily_api_key,
-                            exa_api_key=exa_api_key,
-                            **args
-                        )
-                    else:
-                        tool_result = f"Error: Tool {tool_name} not found."
+                    from app.skills.executor import skill_executor
+                    exec_args = {
+                        "search_provider": search_provider,
+                        "tavily_api_key": tavily_api_key,
+                        "exa_api_key": exa_api_key,
+                        **args
+                    }
+                    user_id = kwargs.get("user_id", "default_user")
+                    exec_result = await skill_executor.execute_skill(
+                        skill_name=tool_name,
+                        arguments=exec_args,
+                        user_id=user_id
+                    )
+                    tool_result = exec_result.to_string()
                         
                     messages.append({
                         "role": "tool",
@@ -101,8 +107,10 @@ class OpenAICompatibleProvider(BaseProvider):
         exa_api_key = kwargs.pop("exa_api_key", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
-        from app.tools.registry import tool_registry
-        tools = tool_registry.get_all_schemas()
+        tools = kwargs.get("tools")
+        if tools is None:
+            from app.skills.router import skill_router
+            tools = skill_router.get_relevant_skills(messages)
         
         async with httpx.AsyncClient() as client:
             payload = {
@@ -183,16 +191,20 @@ class OpenAICompatibleProvider(BaseProvider):
                     except json.JSONDecodeError:
                         args = {}
                         
-                    tool = tool_registry.get_tool(tool_name)
-                    if tool:
-                        tool_result = await tool.execute(
-                            search_provider=search_provider,
-                            tavily_api_key=tavily_api_key,
-                            exa_api_key=exa_api_key,
-                            **args
-                        )
-                    else:
-                        tool_result = f"Error: Tool {tool_name} not found."
+                    from app.skills.executor import skill_executor
+                    exec_args = {
+                        "search_provider": search_provider,
+                        "tavily_api_key": tavily_api_key,
+                        "exa_api_key": exa_api_key,
+                        **args
+                    }
+                    user_id = kwargs.get("user_id", "default_user")
+                    exec_result = await skill_executor.execute_skill(
+                        skill_name=tool_name,
+                        arguments=exec_args,
+                        user_id=user_id
+                    )
+                    tool_result = exec_result.to_string()
                         
                     messages.append({
                         "role": "tool",

@@ -33,6 +33,7 @@ interface AppState {
   messages: Message[];
   chats: ChatSession[];
   activeChatId: string | null;
+  currentView: 'chat' | 'marketplace';
   
   // Phase 1 Features
   theme: 'light' | 'dark' | 'system';
@@ -55,6 +56,7 @@ interface AppState {
   setExaApiKey: (key: string) => void;
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   clearMessages: () => void;
+  setView: (view: 'chat' | 'marketplace') => void;
   
   // Theme Action
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -96,6 +98,7 @@ export const useAppStore = create<AppState>()(
       messages: [],
       chats: [],
       activeChatId: null,
+      currentView: 'chat',
       theme: 'dark',
       pinnedChats: [],
       folders: [],
@@ -114,6 +117,7 @@ export const useAppStore = create<AppState>()(
       setSearchProvider: (provider) => set({ searchProvider: provider }),
       setTavilyApiKey: (key) => set({ tavilyApiKey: key }),
       setExaApiKey: (key) => set({ exaApiKey: key }),
+      setView: (view) => set({ currentView: view }),
       
       setTheme: (theme) => set({ theme }),
 

@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from sse_starlette.sse import EventSourceResponse
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from app.providers.registry import ProviderRegistry
+from app.core.auth import get_current_user
+from app.database.session import get_db
+from app.database.models.user import User, UserApiKey
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -16,15 +20,31 @@ class ChatRequest(BaseModel):
     exa_api_key: Optional[str] = None
 
 @router.post("/completions")
-async def chat_completions(request: ChatRequest, req: Request):
-    auth_header = req.headers.get("Authorization")
-    api_key = None
-    if auth_header and auth_header.startswith("Bearer "):
-        parts = auth_header.split(" ")
-        if len(parts) > 1:
-            api_key = parts[1]
-    if api_key == "not-needed" or not api_key:
-        api_key = None
+async def chat_completions(
+    request: ChatRequest,
+    req: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Fetch provider API key from database if stored
+    db_key = db.query(UserApiKey).filter(
+        UserApiKey.user_id == current_user.id,
+        UserApiKey.provider_name == request.provider
+    ).first()
+    api_key = db_key.decrypt_key() if db_key else None
+
+    # Fetch search API keys from database if stored
+    tavily_db_key = db.query(UserApiKey).filter(
+        UserApiKey.user_id == current_user.id,
+        UserApiKey.provider_name == "tavily"
+    ).first()
+    exa_db_key = db.query(UserApiKey).filter(
+        UserApiKey.user_id == current_user.id,
+        UserApiKey.provider_name == "exa"
+    ).first()
+
+    tavily_api_key = tavily_db_key.decrypt_key() if tavily_db_key else request.tavily_api_key
+    exa_api_key = exa_db_key.decrypt_key() if exa_db_key else request.exa_api_key
 
     try:
         provider_instance = ProviderRegistry.get_provider(request.provider, api_key=api_key)
@@ -41,8 +61,9 @@ async def chat_completions(request: ChatRequest, req: Request):
                 model=request.model,
                 temperature=request.temperature,
                 search_provider=request.search_provider,
-                tavily_api_key=request.tavily_api_key,
-                exa_api_key=request.exa_api_key
+                tavily_api_key=tavily_api_key,
+                exa_api_key=exa_api_key,
+                user_id=current_user.id if current_user else "default_user"
             ):
                 if await req.is_disconnected():
                     break
@@ -63,15 +84,18 @@ async def chat_completions(request: ChatRequest, req: Request):
     return EventSourceResponse(event_generator())
 
 @router.get("/models")
-async def get_models(provider: str, req: Request):
-    auth_header = req.headers.get("Authorization")
-    api_key = None
-    if auth_header and auth_header.startswith("Bearer "):
-        parts = auth_header.split(" ")
-        if len(parts) > 1:
-            api_key = parts[1]
-    if api_key == "not-needed" or not api_key:
-        api_key = None
+async def get_models(
+    provider: str,
+    req: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Fetch provider API key from database if stored
+    db_key = db.query(UserApiKey).filter(
+        UserApiKey.user_id == current_user.id,
+        UserApiKey.provider_name == provider
+    ).first()
+    api_key = db_key.decrypt_key() if db_key else None
 
     try:
         provider_instance = ProviderRegistry.get_provider(provider, api_key=api_key)

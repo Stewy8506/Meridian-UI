@@ -13,19 +13,24 @@ import rehypeHighlight from "rehype-highlight";
 import { CodeBlock } from "./code-block";
 import { toast } from "../ui/toast";
 import { cn } from "@/lib/utils";
+import { SkillResult } from "./skill-result";
 
 interface ContentSegment {
-  type: 'thought' | 'text';
+  type: 'thought' | 'skill' | 'text';
   content: string;
   isStreaming?: boolean;
+  skillName?: string;
+  skillTime?: string;
+  skillStatus?: string;
 }
 
 function parseMessageContent(content: string): ContentSegment[] {
   if (!content) return [];
   
   const segments: ContentSegment[] = [];
-  const regex = /(<thought>[\s\S]*?(?:<\/thought>|$))/g;
-  const parts = content.split(regex);
+  const tokenRegex = /(<thought>[\s\S]*?(?:<\/thought>|$)|<skill_result[^>]*>[\s\S]*?(?:<\/skill_result>|$))/g;
+  
+  const parts = content.split(tokenRegex);
   
   for (const part of parts) {
     if (!part) continue;
@@ -44,6 +49,23 @@ function parseMessageContent(content: string): ContentSegment[] {
         content: thoughtText,
         isStreaming
       });
+    } else if (part.startsWith('<skill_result')) {
+      const match = part.match(/<skill_result\s+name="([^"]*)"(?:\s+time="([^"]*)")?(?:\s+status="([^"]*)")?>([\s\S]*?)(?:<\/skill_result>|$)/);
+      if (match) {
+        const [, name, time, status, body] = match;
+        segments.push({
+          type: 'skill',
+          skillName: name,
+          skillTime: time || "",
+          skillStatus: status || "success",
+          content: body
+        });
+      } else {
+        segments.push({
+          type: 'text',
+          content: part
+        });
+      }
     } else {
       segments.push({
         type: 'text',
@@ -237,6 +259,16 @@ export function MessageBubble({
                         key={idx} 
                         content={seg.content} 
                         isStreaming={seg.isStreaming} 
+                      />
+                    );
+                  } else if (seg.type === 'skill') {
+                    return (
+                      <SkillResult
+                        key={idx}
+                        name={seg.skillName || ""}
+                        time={seg.skillTime}
+                        status={seg.skillStatus}
+                        content={seg.content}
                       />
                     );
                   } else {
