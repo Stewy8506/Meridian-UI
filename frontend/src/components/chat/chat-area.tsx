@@ -183,8 +183,16 @@ export function ChatArea() {
         }
       }
 
-      const cleanTitle = fullTitle.trim().replace(/^["']|["']$/g, '');
-      if (cleanTitle && cleanTitle.length < 50) {
+      let cleanTitle = fullTitle.trim();
+      // Clean up common AI prefixes/quotes/formatting
+      cleanTitle = cleanTitle.replace(/^(title|topic|summary):\s*/i, "");
+      cleanTitle = cleanTitle.replace(/^["']|["']$/g, "");
+      cleanTitle = cleanTitle.trim();
+
+      if (cleanTitle) {
+        if (cleanTitle.length > 40) {
+          cleanTitle = cleanTitle.slice(0, 40) + "...";
+        }
         updateChatTitle(chatId, cleanTitle);
       }
     } catch (error) {
@@ -313,11 +321,14 @@ export function ChatArea() {
     setIsStreaming(false);
     setIsRetrying(false);
 
-    if (currentActiveChatId && messageList.length === 1 && success && assistantText) {
-      const userPrompt = messageList[0].content;
+    if (currentActiveChatId && success && assistantText) {
       const activeChat = useAppStore.getState().chats.find(c => c.id === currentActiveChatId);
-      if (activeChat && (activeChat.title === "New Chat" || activeChat.title === "Imported Chat")) {
-        generateChatTitle(currentActiveChatId, userPrompt, assistantText);
+      if (activeChat && (activeChat.title === "New Chat" || activeChat.title === "Imported Chat" || !activeChat.title)) {
+        const firstUserMsg = activeChat.messages.find(m => m.role === "user")?.content;
+        const firstAssistantMsg = activeChat.messages.find(m => m.role === "assistant" && m.content)?.content;
+        if (firstUserMsg && firstAssistantMsg) {
+          generateChatTitle(currentActiveChatId, firstUserMsg, firstAssistantMsg);
+        }
       }
     }
   };
