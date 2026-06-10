@@ -120,8 +120,8 @@ export function Sidebar() {
         className={cn(
           "group relative w-full flex items-center px-3 py-2 text-[13px] rounded-lg transition-colors text-left cursor-pointer select-none",
           isChatActive
-            ? "bg-accent text-foreground font-medium"
-            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+            ? "bg-accent/80 border border-white/5 text-foreground font-medium shadow-sm"
+            : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
           extraClass
         )}
       >
@@ -232,7 +232,7 @@ export function Sidebar() {
         animate={{ width: sidebarOpen ? 272 : 0, opacity: sidebarOpen ? 1 : 0 }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
         className={cn(
-          "h-full bg-card border-r border-border flex flex-col overflow-hidden whitespace-nowrap z-20 shrink-0",
+          "h-full bg-card/60 backdrop-blur-xl border-r border-border/40 flex flex-col overflow-hidden whitespace-nowrap z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.15)]",
           !sidebarOpen && "border-none"
         )}
       >
@@ -270,7 +270,7 @@ export function Sidebar() {
                   {isActive && (
                     <motion.div
                       layoutId="activeViewTab"
-                      className="absolute inset-0 bg-accent rounded-md z-0"
+                      className="absolute inset-0 bg-gradient-to-r from-accent/80 to-accent/95 border border-white/5 rounded-md z-0 shadow-sm shadow-black/10"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -335,8 +335,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
                 typeof window !== "undefined" && window.location.pathname === "/" && currentView === 'chat'
-                  ? "bg-accent text-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  ? "bg-accent/80 border border-white/5 shadow-sm text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               )}
             >
               <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -348,8 +348,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
                 typeof window !== "undefined" && window.location.pathname === "/arena"
-                  ? "bg-accent text-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  ? "bg-accent/80 border border-white/5 shadow-sm text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               )}
             >
               <Swords className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -361,8 +361,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
                 typeof window !== "undefined" && window.location.pathname === "/workflows"
-                  ? "bg-accent text-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  ? "bg-accent/80 border border-white/5 shadow-sm text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               )}
             >
               <Workflow className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -374,8 +374,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
                 typeof window !== "undefined" && window.location.pathname === "/analytics"
-                  ? "bg-accent text-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  ? "bg-accent/80 border border-white/5 shadow-sm text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               )}
             >
               <BarChart2 className="w-3.5 h-3.5" strokeWidth={1.5} />

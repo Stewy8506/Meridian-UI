@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { Loader2, Activity, Coins, Zap, Settings, BarChart2 } from "lucide-react";
 import { getBaseUrl } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 interface AnalyticsSummary {
   summary: {
@@ -99,9 +100,9 @@ export default function AnalyticsPage() {
           <div className="space-y-8 animate-fade-in">
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+              <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md hover:-translate-y-0.5 hover:shadow-black/20 hover:border-neutral-800 transition-all duration-300 relative overflow-hidden">
                 <div className="flex items-center gap-3 text-neutral-400 mb-4">
-                  <Activity className="w-5 h-5 text-purple-500" />
+                  <Activity className="w-5 h-5 text-purple-500 animate-pulse" />
                   <h3 className="font-medium text-xs uppercase tracking-wider">Total Tokens</h3>
                 </div>
                 <p className="text-3xl font-bold tracking-tight text-neutral-200">
@@ -109,7 +110,7 @@ export default function AnalyticsPage() {
                 </p>
               </div>
 
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+              <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md hover:-translate-y-0.5 hover:shadow-black/20 hover:border-neutral-800 transition-all duration-300 relative overflow-hidden">
                 <div className="flex items-center gap-3 text-neutral-400 mb-4">
                   <Coins className="w-5 h-5 text-emerald-500" />
                   <h3 className="font-medium text-xs uppercase tracking-wider">Est. Spend (USD)</h3>
@@ -119,7 +120,7 @@ export default function AnalyticsPage() {
                 </p>
               </div>
 
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+              <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md hover:-translate-y-0.5 hover:shadow-black/20 hover:border-neutral-800 transition-all duration-300 relative overflow-hidden">
                 <div className="flex items-center gap-3 text-neutral-400 mb-4">
                   <Zap className="w-5 h-5 text-amber-500" />
                   <h3 className="font-medium text-xs uppercase tracking-wider">Avg Latency</h3>
@@ -131,7 +132,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Time-series History Chart */}
-            <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+            <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h3 className="font-medium text-neutral-300 text-sm">Usage Trends</h3>
@@ -181,7 +182,7 @@ export default function AnalyticsPage() {
                         tickFormatter={(value) => chartMetric === "cost" ? `$${value.toFixed(2)}` : value.toLocaleString()}
                       />
                       <RechartsTooltip
-                        contentStyle={{ backgroundColor: '#070707', border: '1px solid #1a1a1a', borderRadius: '8px' }}
+                        contentStyle={{ backgroundColor: 'rgba(7, 7, 7, 0.75)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
                         labelStyle={{ fontSize: '10px', color: '#888', fontWeight: 'bold' }}
                         itemStyle={{ fontSize: '12px', color: '#fff' }}
                         formatter={(value: any) => [
@@ -209,7 +210,7 @@ export default function AnalyticsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Models Chart */}
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+              <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md">
                 <h3 className="font-medium text-neutral-300 text-sm mb-6">Model Distribution (Requests)</h3>
                 <div className="h-64 w-full">
                   {summaryData.models.length > 0 ? (
@@ -219,7 +220,7 @@ export default function AnalyticsPage() {
                         <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#777', fontSize: 11 }} />
                         <RechartsTooltip
                           cursor={{ fill: 'rgba(255,255,255,0.02)' }}
-                          contentStyle={{ backgroundColor: '#070707', border: '1px solid #1a1a1a', borderRadius: '8px' }}
+                          contentStyle={{ backgroundColor: 'rgba(7, 7, 7, 0.75)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
                         />
                         <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={16} />
                       </BarChart>
@@ -231,7 +232,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Providers Chart */}
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+              <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md">
                 <h3 className="font-medium text-neutral-300 text-sm mb-6">Cost Breakdown by Provider</h3>
                 <div className="h-64 w-full">
                   {summaryData.providers.length > 0 && summaryData.summary.total_cost > 0 ? (
@@ -252,7 +253,7 @@ export default function AnalyticsPage() {
                         </Pie>
                         <RechartsTooltip
                           formatter={(value: any) => `$${Number(value).toFixed(4)}`}
-                          contentStyle={{ backgroundColor: '#070707', border: '1px solid #1a1a1a', borderRadius: '8px' }}
+                          contentStyle={{ backgroundColor: 'rgba(7, 7, 7, 0.75)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -264,7 +265,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Skill / Tool Execution Telemetry */}
-            <div className="bg-[#090909] border border-neutral-900 rounded-xl p-6 shadow-sm">
+            <div className="bg-[#090909]/80 border border-neutral-900/60 rounded-xl p-6 shadow-md">
               <div className="mb-4">
                 <h3 className="font-medium text-neutral-300 text-sm">Skill & Tool Execution logs</h3>
                 <p className="text-[10px] text-neutral-500">Track dynamic skill routing, frequency, and average latency.</p>
@@ -290,8 +291,17 @@ export default function AnalyticsPage() {
                             <td className="px-6 py-3.5 text-center font-bold">
                               {skill.count}
                             </td>
-                            <td className="px-6 py-3.5 text-right font-mono text-neutral-400">
-                              {skill.avg_latency_ms.toFixed(0)} <span className="text-[9px] text-neutral-600 font-semibold">ms</span>
+                            <td className="px-6 py-3.5 text-right font-mono">
+                              <span className={cn(
+                                "inline-block px-2.5 py-0.5 rounded text-[10px] font-bold border",
+                                skill.avg_latency_ms < 200
+                                  ? "bg-emerald-950/30 border-emerald-900/40 text-emerald-400"
+                                  : skill.avg_latency_ms < 800
+                                    ? "bg-amber-950/30 border-amber-900/40 text-amber-400"
+                                    : "bg-red-950/30 border-red-900/40 text-red-400"
+                              )}>
+                                {skill.avg_latency_ms.toFixed(0)} ms
+                              </span>
                             </td>
                           </tr>
                         ))

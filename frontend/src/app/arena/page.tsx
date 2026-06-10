@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { apiRequest, getBaseUrl } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 import { 
   Loader2, Swords, Trophy, Eye, EyeOff, 
@@ -273,17 +274,20 @@ export default function ArenaPage() {
             
             {/* Setup Controls */}
             {!isBattleActive && !battleFinished && (
-              <div className="bg-[#090909] border border-neutral-900 rounded-xl p-5 space-y-4">
-                <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">Select Competitors</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#090909]/80 backdrop-blur-md border border-neutral-900/60 rounded-2xl p-6 space-y-5 shadow-lg shadow-black/15">
+                <div className="flex items-center gap-2 pb-2 select-none">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+                  <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Select Competitors</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Competitor A */}
                   <div className="space-y-2.5">
-                    <label className="text-xs font-medium text-neutral-400">Model A</label>
+                    <label className="text-xs font-semibold text-neutral-400">Model A</label>
                     <div className="flex gap-2">
                       <select
                         value={providerA}
                         onChange={(e) => setProviderA(e.target.value)}
-                        className="bg-neutral-950 border border-neutral-850 text-xs rounded-md px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 max-w-[120px]"
+                        className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-xs rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 max-w-[120px] transition-colors"
                       >
                         {providers.map(p => (
                           <option key={p.id} value={p.id}>{p.name}</option>
@@ -293,7 +297,7 @@ export default function ArenaPage() {
                         value={modelA}
                         onChange={(e) => setModelA(e.target.value)}
                         disabled={loadingModelsA}
-                        className="bg-neutral-950 border border-neutral-850 text-xs rounded-md px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1"
+                        className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-xs rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 transition-colors"
                       >
                         {loadingModelsA ? (
                           <option>Loading models...</option>
@@ -308,12 +312,12 @@ export default function ArenaPage() {
 
                   {/* Competitor B */}
                   <div className="space-y-2.5">
-                    <label className="text-xs font-medium text-neutral-400">Model B</label>
+                    <label className="text-xs font-semibold text-neutral-400">Model B</label>
                     <div className="flex gap-2">
                       <select
                         value={providerB}
                         onChange={(e) => setProviderB(e.target.value)}
-                        className="bg-neutral-950 border border-neutral-850 text-xs rounded-md px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 max-w-[120px]"
+                        className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-xs rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 max-w-[120px] transition-colors"
                       >
                         {providers.map(p => (
                           <option key={p.id} value={p.id}>{p.name}</option>
@@ -323,7 +327,7 @@ export default function ArenaPage() {
                         value={modelB}
                         onChange={(e) => setModelB(e.target.value)}
                         disabled={loadingModelsB}
-                        className="bg-neutral-950 border border-neutral-850 text-xs rounded-md px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1"
+                        className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-xs rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 transition-colors"
                       >
                         {loadingModelsB ? (
                           <option>Loading models...</option>
@@ -338,18 +342,18 @@ export default function ArenaPage() {
                 </div>
 
                 {/* Prompt form */}
-                <form onSubmit={handleStartBattle} className="space-y-3 pt-2">
+                <form onSubmit={handleStartBattle} className="space-y-4 pt-2">
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Enter a prompt to battle models..."
-                    className="w-full text-xs min-h-[90px] bg-neutral-950 border border-neutral-850 rounded-xl p-3 focus:outline-none focus:border-neutral-700 text-neutral-200 placeholder:text-neutral-600 resize-none leading-relaxed"
+                    className="w-full text-xs min-h-[100px] bg-neutral-950 border border-neutral-850 rounded-xl p-3.5 focus:outline-none focus:border-purple-500/50 text-neutral-200 placeholder:text-neutral-700 resize-none leading-relaxed transition-all duration-200 shadow-inner"
                   />
                   <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={!prompt.trim() || !modelA || !modelB}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 text-black font-semibold text-xs rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-neutral-800 disabled:to-neutral-900 disabled:text-neutral-600 text-white font-semibold text-xs rounded-lg transition-all duration-200 shadow-md hover:shadow-purple-500/10 active:scale-98 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
                     >
                       <Swords className="w-3.5 h-3.5" />
                       Battle models
@@ -364,7 +368,12 @@ export default function ArenaPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Panel A */}
-                  <div className="bg-[#090909] border border-neutral-900 rounded-xl p-5 flex flex-col min-h-[400px] max-h-[600px]">
+                  <div className={cn(
+                    "border rounded-xl p-5 flex flex-col min-h-[400px] max-h-[600px] transition-all duration-500 relative overflow-hidden",
+                    isBattleActive && !battleFinished
+                      ? "bg-purple-950/5 border-purple-500/40 shadow-[0_0_40px_rgba(139,92,246,0.08)]"
+                      : "bg-[#090909] border-neutral-900"
+                  )}>
                     <div className="flex items-center justify-between pb-3 border-b border-neutral-900 mb-4 select-none">
                       <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
                         {blindMode && !voted ? "Model A" : modelA}
@@ -387,7 +396,12 @@ export default function ArenaPage() {
                   </div>
 
                   {/* Panel B */}
-                  <div className="bg-[#090909] border border-neutral-900 rounded-xl p-5 flex flex-col min-h-[400px] max-h-[600px]">
+                  <div className={cn(
+                    "border rounded-xl p-5 flex flex-col min-h-[400px] max-h-[600px] transition-all duration-500 relative overflow-hidden",
+                    isBattleActive && !battleFinished
+                      ? "bg-purple-950/5 border-purple-500/40 shadow-[0_0_40px_rgba(139,92,246,0.08)]"
+                      : "bg-[#090909] border-neutral-900"
+                  )}>
                     <div className="flex items-center justify-between pb-3 border-b border-neutral-900 mb-4 select-none">
                       <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
                         {blindMode && !voted ? "Model B" : modelB}
@@ -412,37 +426,43 @@ export default function ArenaPage() {
 
                 {/* Vote Panel */}
                 {battleFinished && (
-                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-5 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="bg-gradient-to-b from-neutral-950 to-neutral-900 border border-neutral-850/60 rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-5 shadow-xl select-none">
                     {!voted ? (
                       <>
-                        <div>
-                          <span className="text-xs font-bold text-neutral-300 uppercase tracking-widest block mb-1">Cast Your Vote</span>
-                          <span className="text-[10px] text-neutral-500">Choose the response that is superior. Ratings update instantly.</span>
+                        <div className="space-y-1 select-none">
+                          <span className="text-xs font-bold text-neutral-300 uppercase tracking-widest block">Cast Your Vote</span>
+                          <span className="text-[10px] text-neutral-500">Compare the responses carefully. Standings update immediately.</span>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-4">
                           <button
                             onClick={() => handleVote("model_a")}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-purple-950/40 border border-purple-800 text-purple-300 hover:bg-purple-900/40 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            className="flex flex-col items-center justify-center gap-2 px-6 py-4 bg-neutral-900/60 hover:bg-purple-950/25 border border-neutral-800 hover:border-purple-500/40 text-neutral-300 hover:text-purple-300 rounded-xl transition-all duration-300 shadow-md hover:shadow-purple-500/5 hover:-translate-y-0.5 cursor-pointer w-40"
                           >
-                            👈 Model A is better
+                            <span className="text-xl">👈</span>
+                            <span className="text-xs font-bold uppercase tracking-wider">Model A</span>
+                            <span className="text-[10px] text-neutral-500">Superior Output</span>
                           </button>
                           <button
                             onClick={() => handleVote("tie")}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-neutral-900 border border-neutral-850 text-neutral-300 hover:bg-neutral-850 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            className="flex flex-col items-center justify-center gap-2 px-6 py-4 bg-neutral-900/60 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-neutral-200 rounded-xl transition-all duration-300 shadow-md hover:-translate-y-0.5 cursor-pointer w-40"
                           >
-                            🤝 Tie / Draw
+                            <span className="text-xl">🤝</span>
+                            <span className="text-xs font-bold uppercase tracking-wider">Tie / Draw</span>
+                            <span className="text-[10px] text-neutral-500">Both are Equal</span>
                           </button>
                           <button
                             onClick={() => handleVote("model_b")}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-purple-950/40 border border-purple-800 text-purple-300 hover:bg-purple-900/40 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            className="flex flex-col items-center justify-center gap-2 px-6 py-4 bg-neutral-900/60 hover:bg-purple-950/25 border border-neutral-800 hover:border-purple-500/40 text-neutral-300 hover:text-purple-300 rounded-xl transition-all duration-300 shadow-md hover:shadow-purple-500/5 hover:-translate-y-0.5 cursor-pointer w-40"
                           >
-                            👉 Model B is better
+                            <span className="text-xl">👉</span>
+                            <span className="text-xs font-bold uppercase tracking-wider">Model B</span>
+                            <span className="text-[10px] text-neutral-500">Superior Output</span>
                           </button>
                         </div>
                       </>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-400">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-400">
                           <ThumbsUp className="w-4 h-4" />
                           <span>Vote recorded: {voteWinner === "tie" ? "Tie" : voteWinner === "model_a" ? "Model A" : "Model B"} wins!</span>
                         </div>
@@ -458,7 +478,7 @@ export default function ArenaPage() {
                             setVoteWinner(null);
                             setBattleFinished(false);
                           }}
-                          className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-black text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          className="px-5 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-black text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-md"
                         >
                           Start New Battle
                         </button>

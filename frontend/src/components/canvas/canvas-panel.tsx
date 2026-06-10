@@ -8,6 +8,7 @@ import {
   X, Save, FileCode, History, Eye, Edit2, 
   Loader2, GitPullRequest, ArrowLeftRight, Check
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 
@@ -216,7 +217,7 @@ export function CanvasPanel() {
   return (
     <div 
       style={{ width }} 
-      className="h-full bg-card border-l border-neutral-900 flex flex-row shrink-0 relative select-none"
+      className="h-full bg-card/60 backdrop-blur-xl border-l border-border/40 flex flex-row shrink-0 relative select-none shadow-[-4px_0_24px_rgba(0,0,0,0.15)]"
     >
       {/* Resizer bar */}
       <div
@@ -235,7 +236,7 @@ export function CanvasPanel() {
               <select
                 value={activeCanvasFileId || ""}
                 onChange={(e) => setActiveCanvasFileId(e.target.value)}
-                className="bg-neutral-950 border border-neutral-850 text-xs font-semibold rounded-lg px-2 py-1 text-neutral-300 focus:outline-none max-w-[180px] cursor-pointer"
+                className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-xs font-semibold rounded-lg px-2.5 py-1 text-neutral-300 focus:outline-none max-w-[180px] cursor-pointer transition-colors"
               >
                 {files.map(f => (
                   <option key={f.id} value={f.id}>{f.filename}</option>
@@ -259,8 +260,10 @@ export function CanvasPanel() {
             <div className="flex bg-neutral-950 p-0.5 border border-neutral-850 rounded-lg text-[10px]">
               <button
                 onClick={() => { setActiveTab("preview"); setShowDiff(false); }}
-                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
-                  activeTab === "preview" ? "bg-neutral-850 text-white" : "text-neutral-400 hover:text-white"
+                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                  activeTab === "preview" 
+                    ? "bg-gradient-to-r from-accent/80 to-accent/95 border border-white/5 text-white shadow-sm shadow-black/10" 
+                    : "text-neutral-400 hover:text-white"
                 }`}
               >
                 <Eye className="w-3 h-3" />
@@ -268,8 +271,10 @@ export function CanvasPanel() {
               </button>
               <button
                 onClick={() => { setActiveTab("edit"); setShowDiff(false); }}
-                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
-                  activeTab === "edit" ? "bg-neutral-850 text-white" : "text-neutral-400 hover:text-white"
+                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                  activeTab === "edit" 
+                    ? "bg-gradient-to-r from-accent/80 to-accent/95 border border-white/5 text-white shadow-sm shadow-black/10" 
+                    : "text-neutral-400 hover:text-white"
                 }`}
               >
                 <Edit2 className="w-3 h-3" />
@@ -277,8 +282,10 @@ export function CanvasPanel() {
               </button>
               <button
                 onClick={() => setActiveTab("history")}
-                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
-                  activeTab === "history" ? "bg-neutral-850 text-white" : "text-neutral-400 hover:text-white"
+                className={`flex items-center gap-1 px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                  activeTab === "history" 
+                    ? "bg-gradient-to-r from-accent/80 to-accent/95 border border-white/5 text-white shadow-sm shadow-black/10" 
+                    : "text-neutral-400 hover:text-white"
                 }`}
               >
                 <History className="w-3 h-3" />

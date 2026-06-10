@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { apiRequest, getBaseUrl } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 import { 
   Loader2, Workflow, Plus, Trash2, ArrowRight, Play, 
@@ -473,7 +474,7 @@ export default function WorkflowsPage() {
                             <select
                               value={step.provider}
                               onChange={(e) => handleStepChange(idx, { provider: e.target.value })}
-                              className="bg-neutral-900 border border-neutral-850 text-[11px] rounded px-2 py-1 text-neutral-300 focus:outline-none flex-1 max-w-[100px]"
+                              className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-[11px] rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 max-w-[100px] transition-colors"
                             >
                               {providers.map(p => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -484,7 +485,7 @@ export default function WorkflowsPage() {
                               value={step.model}
                               onChange={(e) => handleStepChange(idx, { model: e.target.value })}
                               disabled={isLoadingModels}
-                              className="bg-neutral-900 border border-neutral-850 text-[11px] rounded px-2 py-1 text-neutral-300 focus:outline-none flex-1"
+                              className="bg-neutral-950 border border-neutral-850 focus:border-purple-500/40 text-[11px] rounded-lg px-2.5 py-1.5 text-neutral-300 focus:outline-none flex-1 transition-colors"
                             >
                               <option value="">Select model...</option>
                               {stepModels.map(m => (
@@ -501,7 +502,7 @@ export default function WorkflowsPage() {
                             value={step.prompt}
                             onChange={(e) => handleStepChange(idx, { prompt: e.target.value })}
                             placeholder="e.g. Translate the text output: {{step_1_output}}"
-                            className="w-full text-xs min-h-[60px] max-h-[120px] bg-neutral-900 border border-neutral-850 rounded p-2 focus:outline-none focus:border-neutral-750 text-neutral-200 placeholder:text-neutral-700 resize-y font-sans leading-relaxed"
+                            className="w-full text-xs min-h-[60px] max-h-[120px] bg-neutral-950 border border-neutral-850 rounded-xl p-3 focus:outline-none focus:border-purple-500/50 text-neutral-200 placeholder:text-neutral-700 resize-y font-sans leading-relaxed transition-all duration-200 shadow-inner"
                           />
                         </div>
                       </div>
@@ -626,8 +627,8 @@ export default function WorkflowsPage() {
                   )}
                 </div>
 
-                {/* Steps Visual Pipeline Output list */}
-                <div className="space-y-4">
+                {/* Steps Visual Pipeline Output list with Timeline Connector */}
+                <div className="relative pl-8 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-[2px] before:bg-neutral-900">
                   {activeWorkflow.definition.map((step, idx) => {
                     const stepOut = stepOutputs[idx] || "";
                     const stepErr = stepErrors[idx] || "";
@@ -638,14 +639,22 @@ export default function WorkflowsPage() {
                     return (
                       <div
                         key={idx}
-                        className={`border rounded-xl transition-all ${
+                        className={`border rounded-xl transition-all relative ${
                           isActive 
-                            ? "bg-neutral-950/20 border-purple-900/60 shadow-[0_0_15px_rgba(139,92,246,0.05)]" 
+                            ? "bg-neutral-950/25 border-purple-900/50 shadow-[0_0_20px_rgba(139,92,246,0.06)]" 
                             : isPending 
                               ? "bg-neutral-950/10 border-neutral-950 opacity-40" 
                               : "bg-[#070707] border-neutral-900"
                         }`}
                       >
+                        {/* Timeline Node Dot */}
+                        <div className={`absolute -left-[29px] top-5 w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 z-10 ${
+                          isActive 
+                            ? "bg-purple-500 border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)] scale-110"
+                            : isDone
+                              ? "bg-emerald-500 border-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                              : "bg-neutral-950 border-neutral-800"
+                        }`} />
                         {/* Step Header */}
                         <div className="p-4 flex items-center justify-between border-b border-neutral-950 select-none">
                           <div className="flex items-center gap-2">
