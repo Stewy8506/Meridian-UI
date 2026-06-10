@@ -30,7 +30,6 @@ export function ThemeToggle() {
     }
   }, [theme, mounted]);
 
-  // Listen to system theme changes if system is selected
   useEffect(() => {
     if (!mounted || theme !== "system") return;
 
@@ -46,53 +45,39 @@ export function ThemeToggle() {
   }, [theme, mounted]);
 
   if (!mounted) {
-    return <div className="w-9 h-9 rounded-lg bg-muted/40 animate-pulse" />;
+    return <div className="w-7 h-7 rounded-md bg-muted" />;
   }
 
   const iconMap = {
-    light: <Sun className="w-[18px] h-[18px] text-amber-500" />,
-    dark: <Moon className="w-[18px] h-[18px] text-indigo-400" />,
-    system: <Laptop className="w-[18px] h-[18px] text-muted-foreground" />,
-  };
-
-  const themeLabelMap = {
-    light: "Light",
-    dark: "Dark",
-    system: "System",
+    light: <Sun className="w-3.5 h-3.5" />,
+    dark: <Moon className="w-3.5 h-3.5" />,
+    system: <Laptop className="w-3.5 h-3.5" />,
   };
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-9 h-9 rounded-lg border border-border/40 hover:bg-muted/60 hover:text-foreground transition-all duration-200 shadow-sm"
-        title="Change theme"
+        className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        title="Theme"
       >
-        <motion.div
-          key={theme}
-          initial={{ rotate: -45, scale: 0.8, opacity: 0 }}
-          animate={{ rotate: 0, scale: 1, opacity: 1 }}
-          transition={{ duration: 0.15 }}
-        >
-          {iconMap[theme]}
-        </motion.div>
+        {iconMap[theme]}
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop click area */}
             <div
               className="fixed inset-0 z-10"
               onClick={() => setIsOpen(false)}
             />
             
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.12 }}
-              className="absolute right-0 mt-2 w-32 rounded-xl border border-border bg-card/90 backdrop-blur-md p-1 shadow-lg z-20"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.1 }}
+              className="absolute right-0 bottom-full mb-1 w-28 rounded-lg border border-border bg-popover p-1 shadow-md z-20"
             >
               {(["light", "dark", "system"] as const).map((t) => (
                 <button
@@ -101,14 +86,14 @@ export function ThemeToggle() {
                     setTheme(t);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left ${
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-left capitalize ${
                     theme === t
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
                   <span className="shrink-0">{iconMap[t]}</span>
-                  <span>{themeLabelMap[t]}</span>
+                  <span>{t}</span>
                 </button>
               ))}
             </motion.div>

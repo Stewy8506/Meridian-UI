@@ -14,9 +14,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !initialized) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950 font-sans">
-        <Loader2 className="w-10 h-10 text-purple-500 animate-spin mb-4" />
-        <p className="text-zinc-400 text-sm tracking-wide animate-pulse">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black font-sans">
+        <Loader2 className="w-10 h-10 text-foreground animate-spin mb-4" />
+        <p className="text-muted-foreground text-sm tracking-wide animate-pulse">
           Initializing Workspace...
         </p>
       </div>

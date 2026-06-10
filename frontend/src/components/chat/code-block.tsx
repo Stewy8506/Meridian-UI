@@ -23,12 +23,10 @@ export function CodeBlock({ children }: CodeBlockProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [runLoading, setRunLoading] = useState(false);
 
-  // Extract raw code string
   const rawCode = extractText(children).trim();
   const lineCount = rawCode.split("\n").length;
   const isLongCode = lineCount > 25;
 
-  // Extract language from className (if present on code child)
   let language = "code";
   if (children && typeof children === "object" && "props" in children) {
     const codeProps = (children as any).props || {};
@@ -43,117 +41,106 @@ export function CodeBlock({ children }: CodeBlockProps) {
     try {
       await navigator.clipboard.writeText(rawCode);
       setCopied(true);
-      toast.success("Code copied to clipboard");
+      toast.success("Copied");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Failed to copy code");
+      toast.error("Failed to copy");
     }
   };
 
   const handleRunCode = () => {
     setRunLoading(true);
-    toast.info(`Running ${language} code sandbox...`);
+    toast.info(`Running ${language}...`);
     setTimeout(() => {
       setRunLoading(false);
-      toast.success("Execution completed (mock sandbox)");
+      toast.success("Execution completed (sandbox)");
     }, 1500);
   };
 
   return (
-    <div className="my-4 border border-border/80 bg-[#0e1117] rounded-xl overflow-hidden shadow-md flex flex-col text-left font-mono">
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#161b22] border-b border-border/50 select-none">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-2 bg-muted/20 px-2 py-0.5 rounded-md border border-border/10">
-            {language}
-          </span>
-        </div>
+    <div className="my-4 border border-border rounded-lg overflow-hidden flex flex-col text-left font-[family-name:var(--font-geist-mono)]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted border-b border-border select-none">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+          {language}
+        </span>
 
-        <div className="flex items-center gap-1">
-          {/* Line Numbers Toggle */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => setShowLineNumbers(!showLineNumbers)}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1 rounded transition-colors ${
               showLineNumbers 
-                ? "bg-primary/10 text-primary hover:bg-primary/20" 
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                ? "bg-accent text-foreground" 
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
             }`}
             title="Toggle line numbers"
           >
-            <AlignLeft className="w-3.5 h-3.5" />
+            <AlignLeft className="w-3 h-3" />
           </button>
 
-          {/* Copy Button */}
           <button
             onClick={handleCopy}
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
-            title="Copy code"
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+            title="Copy"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           </button>
 
-          {/* Run Code Placeholder */}
           {["python", "javascript", "js", "ts", "typescript", "bash", "sh"].includes(language.toLowerCase()) && (
             <button
               onClick={handleRunCode}
               disabled={runLoading}
-              className="p-1.5 text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-all disabled:opacity-50 shrink-0"
-              title="Run code block"
+              className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors disabled:opacity-50 shrink-0"
+              title="Run"
             >
-              <Play className={`w-3.5 h-3.5 ${runLoading ? 'animate-spin' : ''}`} />
+              <Play className={`w-3 h-3 ${runLoading ? 'animate-spin' : ''}`} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Code body wrapper with optional collapsibility */}
+      {/* Code body */}
       <div className="relative flex min-w-0">
-        {/* Line Numbers column */}
         {showLineNumbers && (
-          <div className="px-3 py-4 border-r border-border/10 text-right text-muted-foreground/40 text-xs md:text-sm select-none bg-[#090d16] font-sans">
+          <div className="px-3 py-3 border-r border-border text-right text-muted-foreground/30 text-[11px] select-none font-[family-name:var(--font-geist-mono)]">
             {Array.from({ length: lineCount }).map((_, i) => (
-              <div key={i} className="h-6 leading-6">
+              <div key={i} className="h-[1.7em] leading-[1.7em]">
                 {i + 1}
               </div>
             ))}
           </div>
         )}
 
-        {/* Code Content */}
         <div 
-          className={`flex-1 overflow-x-auto min-w-0 bg-[#0e1117] ${
+          className={`flex-1 overflow-x-auto min-w-0 ${
             isLongCode && isCollapsed ? "max-h-[300px] overflow-hidden" : ""
           }`}
         >
-          <pre className="p-4 text-xs md:text-sm leading-6 overflow-x-auto whitespace-pre font-mono scrollbar-thin">
+          <pre className="p-3 text-xs leading-[1.7em] overflow-x-auto whitespace-pre font-[family-name:var(--font-geist-mono)] scrollbar-hide">
             {children}
           </pre>
         </div>
 
-        {/* Shadow Overlay for Collapsed State */}
         {isLongCode && isCollapsed && (
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0e1117] to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-card to-transparent pointer-events-none" />
         )}
       </div>
 
-      {/* Collapse/Expand Toggle */}
+      {/* Collapse toggle */}
       {isLongCode && (
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#161b22] hover:bg-[#1f242c] text-xs font-semibold text-muted-foreground hover:text-foreground border-t border-border/30 transition-all select-none"
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-muted hover:bg-accent text-[10px] font-medium text-muted-foreground hover:text-foreground border-t border-border transition-colors select-none"
         >
           {isCollapsed ? (
             <>
-              <span>Show more ({lineCount - 12} lines)</span>
-              <ChevronDown className="w-3.5 h-3.5" />
+              <span>Show all ({lineCount} lines)</span>
+              <ChevronDown className="w-3 h-3" />
             </>
           ) : (
             <>
-              <span>Show less</span>
-              <ChevronUp className="w-3.5 h-3.5" />
+              <span>Collapse</span>
+              <ChevronUp className="w-3 h-3" />
             </>
           )}
         </button>

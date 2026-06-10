@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/store/app-store";
-import { 
-  Search, MessageSquare, Laptop, Moon, Sun, 
-  Settings, PlusSquare, Trash2, SidebarClose, SidebarOpen, ChevronRight, Terminal
-} from "lucide-react";
+import { Search, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "./toast";
 
@@ -13,8 +10,7 @@ interface ActionItem {
   id: string;
   title: string;
   subtitle?: string;
-  category: "Actions" | "Navigation" | "Chats";
-  icon: React.ReactNode;
+  category: "Actions" | "Chats";
   perform: () => void;
 }
 
@@ -39,7 +35,6 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-focus input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -51,135 +46,79 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const actions: ActionItem[] = [
     {
       id: "new-chat",
-      title: "New Chat",
-      subtitle: "Start a fresh conversation",
+      title: "New conversation",
+      subtitle: "Start fresh",
       category: "Actions",
-      icon: <PlusSquare className="w-4 h-4 text-emerald-500" />,
-      perform: () => {
-        const id = createChat();
-        toast.success("New chat created");
-        onClose();
-      }
+      perform: () => { createChat(); toast.success("Created"); onClose(); }
     },
     {
       id: "toggle-sidebar",
-      title: sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar",
-      subtitle: "Show/hide workspace sidebar",
+      title: sidebarOpen ? "Hide sidebar" : "Show sidebar",
       category: "Actions",
-      icon: sidebarOpen ? <SidebarClose className="w-4 h-4 text-indigo-400" /> : <SidebarOpen className="w-4 h-4 text-indigo-400" />,
-      perform: () => {
-        toggleSidebar();
-        onClose();
-      }
+      perform: () => { toggleSidebar(); onClose(); }
     },
     {
       id: "clear-chat",
-      title: "Clear Current Chat",
-      subtitle: "Clear all messages in active session",
+      title: "Clear messages",
+      subtitle: "Clear current conversation",
       category: "Actions",
-      icon: <Trash2 className="w-4 h-4 text-rose-500" />,
-      perform: () => {
-        clearMessages();
-        toast.info("Chat messages cleared");
-        onClose();
-      }
+      perform: () => { clearMessages(); toast.info("Cleared"); onClose(); }
     },
     {
       id: "theme-light",
-      title: "Switch to Light Mode",
-      subtitle: "Set theme to light",
+      title: "Light mode",
       category: "Actions",
-      icon: <Sun className="w-4 h-4 text-amber-500" />,
-      perform: () => {
-        setTheme("light");
-        toast.success("Light theme activated");
-        onClose();
-      }
+      perform: () => { setTheme("light"); onClose(); }
     },
     {
       id: "theme-dark",
-      title: "Switch to Dark Mode",
-      subtitle: "Set theme to dark",
+      title: "Dark mode",
       category: "Actions",
-      icon: <Moon className="w-4 h-4 text-indigo-400" />,
-      perform: () => {
-        setTheme("dark");
-        toast.success("Dark theme activated");
-        onClose();
-      }
+      perform: () => { setTheme("dark"); onClose(); }
     },
     {
       id: "theme-system",
-      title: "Switch to System Theme",
-      subtitle: "Follow system appearance",
+      title: "System theme",
       category: "Actions",
-      icon: <Laptop className="w-4 h-4 text-muted-foreground" />,
-      perform: () => {
-        setTheme("system");
-        toast.success("System theme activated");
-        onClose();
-      }
+      perform: () => { setTheme("system"); onClose(); }
     },
     {
       id: "provider-local",
-      title: "Use Local Provider",
-      subtitle: "Switch API backend to Local (LM Studio/Ollama)",
+      title: "Switch to Local",
+      subtitle: "LM Studio / Ollama",
       category: "Actions",
-      icon: <Terminal className="w-4 h-4 text-amber-500" />,
-      perform: () => {
-        setProvider("local");
-        toast.info("Switched to Local provider");
-        onClose();
-      }
+      perform: () => { setProvider("local"); toast.info("Local"); onClose(); }
     },
     {
       id: "provider-openai",
-      title: "Use OpenAI Provider",
-      subtitle: "Switch API backend to OpenAI models",
+      title: "Switch to OpenAI",
       category: "Actions",
-      icon: <Terminal className="w-4 h-4 text-emerald-500" />,
-      perform: () => {
-        setProvider("openai");
-        toast.info("Switched to OpenAI provider");
-        onClose();
-      }
+      perform: () => { setProvider("openai"); toast.info("OpenAI"); onClose(); }
     },
     {
       id: "provider-google",
-      title: "Use Google Gemini Provider",
-      subtitle: "Switch API backend to Google Gemini models",
+      title: "Switch to Google",
+      subtitle: "Gemini models",
       category: "Actions",
-      icon: <Terminal className="w-4 h-4 text-blue-500" />,
-      perform: () => {
-        setProvider("google");
-        toast.info("Switched to Google Gemini provider");
-        onClose();
-      }
+      perform: () => { setProvider("google"); toast.info("Google"); onClose(); }
     }
   ];
 
-  // Map chats into actions
   const chatActions: ActionItem[] = chats.map(c => ({
     id: `chat-${c.id}`,
-    title: c.title || "Untitled Chat",
-    subtitle: `${c.messages.length} message${c.messages.length === 1 ? '' : 's'} • Created ${new Date(c.createdAt).toLocaleDateString()}`,
+    title: c.title || "Untitled",
+    subtitle: `${c.messages.length} messages`,
     category: "Chats",
-    icon: <MessageSquare className="w-4 h-4 text-violet-400" />,
-    perform: () => {
-      setActiveChatId(c.id);
-      onClose();
-    }
+    perform: () => { setActiveChatId(c.id); onClose(); }
   }));
 
   const allItems = [...actions, ...chatActions];
 
-  // Filter items based on query
   const filteredItems = allItems.filter(item => 
     item.title.toLowerCase().includes(query.toLowerCase()) || 
     (item.subtitle && item.subtitle.toLowerCase().includes(query.toLowerCase()))
   );
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -205,7 +144,6 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, selectedIndex, filteredItems, onClose]);
 
-  // Adjust scroll when selection changes
   useEffect(() => {
     const selectedElement = containerRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
     if (selectedElement) {
@@ -217,8 +155,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] p-4 sm:p-0">
-        {/* Backdrop overlay */}
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[18vh] p-4 sm:p-0">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -227,55 +164,52 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
           className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         />
 
-        {/* Raycast Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.97, y: -10 }}
+          initial={{ opacity: 0, scale: 0.97, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.97, y: -10 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="relative w-full max-w-lg glass-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border/80"
+          exit={{ opacity: 0, scale: 0.97, y: -8 }}
+          transition={{ duration: 0.15 }}
+          className="relative w-full max-w-md bg-card rounded-xl border border-border shadow-lg flex flex-col overflow-hidden"
         >
-          {/* Input field */}
-          <div className="flex items-center gap-3 px-4 border-b border-border/50 h-13 shrink-0">
-            <Search className="w-5 h-5 text-muted-foreground" />
+          {/* Search input */}
+          <div className="flex items-center gap-2.5 px-4 border-b border-border h-12 shrink-0">
+            <Search className="w-4 h-4 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search chats, models, themes, actions..."
+              placeholder="Search..."
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
                 setSelectedIndex(0);
               }}
-              className="flex-1 bg-transparent border-none text-foreground placeholder:text-muted-foreground outline-none text-sm h-full"
+              className="flex-1 bg-transparent border-none text-foreground placeholder:text-muted-foreground/50 outline-none text-sm"
             />
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-muted border border-border text-[10px] font-mono text-muted-foreground shadow-sm uppercase shrink-0">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-muted border border-border text-[9px] font-[family-name:var(--font-geist-mono)] text-muted-foreground shrink-0">
               ESC
             </kbd>
           </div>
 
-          {/* Results list */}
+          {/* Results */}
           <div 
             ref={containerRef}
-            className="flex-1 overflow-y-auto max-h-[360px] p-2 space-y-1 scrollbar-thin select-none"
+            className="flex-1 overflow-y-auto max-h-[320px] p-1.5 select-none"
           >
             {filteredItems.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground italic">
-                No results found for "{query}"
+              <div className="p-6 text-center text-xs text-muted-foreground">
+                No results for &ldquo;{query}&rdquo;
               </div>
             ) : (
-              // Group items logically by category
               ["Actions", "Chats"].map((cat) => {
                 const catItems = filteredItems.filter(i => i.category === cat);
                 if (catItems.length === 0) return null;
 
                 return (
-                  <div key={cat} className="space-y-1">
-                    <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                  <div key={cat} className="mb-1">
+                    <div className="px-2.5 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">
                       {cat}
                     </div>
                     {catItems.map((item) => {
-                      // Find index of this item in the global filteredItems array
                       const globalIndex = filteredItems.indexOf(item);
                       const isSelected = globalIndex === selectedIndex;
 
@@ -287,25 +221,20 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
                             setSelectedIndex(globalIndex);
                             item.perform();
                           }}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all cursor-pointer ${
+                          className={`flex items-center justify-between px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
                             isSelected 
-                              ? "bg-primary/15 text-foreground font-medium shadow-sm border-l-3 border-primary" 
-                              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                              ? "bg-accent text-foreground" 
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                           }`}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="shrink-0">{item.icon}</span>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs md:text-sm font-medium truncate">{item.title}</span>
-                              {item.subtitle && (
-                                <span className="text-[10px] md:text-xs text-muted-foreground/80 truncate mt-0.5">
-                                  {item.subtitle}
-                                </span>
-                              )}
-                            </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-medium truncate">{item.title}</span>
+                            {item.subtitle && (
+                              <span className="text-[10px] text-muted-foreground truncate">{item.subtitle}</span>
+                            )}
                           </div>
                           {isSelected && (
-                            <ChevronRight className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           )}
                         </div>
                       );
@@ -316,15 +245,13 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
             )}
           </div>
 
-          {/* Footer info */}
-          <div className="px-4 py-2 border-t border-border/50 bg-muted/20 flex items-center justify-between text-[10px] text-muted-foreground shrink-0 select-none">
+          {/* Footer */}
+          <div className="px-3 py-1.5 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground shrink-0 select-none">
             <div className="flex gap-3">
-              <span>↑↓ Navigation</span>
-              <span>↵ Select</span>
+              <span>↑↓ navigate</span>
+              <span>↵ select</span>
             </div>
-            <div>
-              Active Model: <span className="font-semibold text-primary">{model}</span> ({provider})
-            </div>
+            <span className="font-[family-name:var(--font-geist-mono)]">{model}</span>
           </div>
         </motion.div>
       </div>

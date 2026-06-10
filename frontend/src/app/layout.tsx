@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ToastContainer } from "@/components/ui/toast";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   title: "AI Workspace",
@@ -38,7 +39,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground flex h-screen overflow-hidden`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-[family-name:var(--font-geist-sans)] antialiased bg-background text-foreground flex h-screen overflow-hidden`}>
         <AuthProvider>
           <Sidebar />
           <main className="flex-1 flex flex-col min-w-0">

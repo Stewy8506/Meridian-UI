@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/app-store";
 import { 
-  X, Eye, EyeOff, Settings, Sliders, Cpu, 
-  Sparkles, Keyboard, Info, Check, AlertCircle, 
-  Download, Upload, RefreshCw
+  X, Eye, EyeOff, 
+  AlertCircle, 
+  Download, Upload, RefreshCw, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "../ui/toast";
@@ -54,7 +54,6 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
 
   const [providers, setProviders] = useState<any[]>([]);
 
-  // Load providers list on dialog open or when provider settings tab is loaded
   useEffect(() => {
     if (!open) return;
     const fetchProviderList = async () => {
@@ -71,11 +70,10 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   useEffect(() => {
     if (!open || activeTab !== "models" || !provider) return;
 
-    // Check if the selected provider is configured
     const selectedProv = providers.find(p => p.id === provider);
     if (selectedProv && !selectedProv.configured) {
       setAvailableModels([]);
-      setModelError(`Please configure your API key for ${selectedProv.name} under the 'Providers' tab first.`);
+      setModelError(`Configure your API key for ${selectedProv.name} under Providers first.`);
       return;
     }
 
@@ -90,7 +88,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           setModel(data.models[0]);
         }
       } catch (err: any) {
-        setModelError(err.message || "An error occurred fetching models");
+        setModelError(err.message || "Failed to fetch models");
         setAvailableModels([]);
       } finally {
         setLoadingModels(false);
@@ -100,7 +98,6 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     fetchModels();
   }, [provider, open, activeTab, setModel, providers, model]);
 
-  // Export chats
   const handleExportChats = () => {
     try {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chats, null, 2));
@@ -110,13 +107,12 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      toast.success("Chats exported successfully");
+      toast.success("Exported");
     } catch (e) {
       toast.error("Export failed");
     }
   };
 
-  // Import chats
   const handleImportChats = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -126,121 +122,108 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          // Simplistic import - replace chats in store or merge
           useAppStore.setState({ chats: parsed });
-          toast.success(`Successfully imported ${parsed.length} conversations`);
+          toast.success(`Imported ${parsed.length} conversations`);
         } else {
-          toast.error("Invalid export file format");
+          toast.error("Invalid file format");
         }
       } catch (err) {
-        toast.error("Failed to parse import file");
+        toast.error("Failed to parse file");
       }
     };
     reader.readAsText(file);
   };
 
-  const menuItems = [
-    { id: "general", label: "General Settings", icon: <Sliders className="w-4 h-4" /> },
-    { id: "providers", label: "API Providers", icon: <Cpu className="w-4 h-4" /> },
-    { id: "models", label: "Model Registry", icon: <Sparkles className="w-4 h-4" /> },
-    { id: "appearance", label: "UI & Theme", icon: <Settings className="w-4 h-4" /> },
-    { id: "shortcuts", label: "Keyboard Shortcuts", icon: <Keyboard className="w-4 h-4" /> },
-    { id: "about", label: "About Workspace", icon: <Info className="w-4 h-4" /> },
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "general", label: "General" },
+    { id: "providers", label: "Providers" },
+    { id: "models", label: "Models" },
+    { id: "appearance", label: "Appearance" },
+    { id: "shortcuts", label: "Shortcuts" },
+    { id: "about", label: "About" },
   ];
 
   return (
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 select-none">
-          {/* Backdrop blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
           />
           
-          {/* Layout Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 15 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative w-full h-full md:max-w-4xl md:h-[80vh] bg-card border border-border shadow-2xl rounded-none md:rounded-2xl overflow-hidden flex flex-col md:flex-row z-50"
+            exit={{ opacity: 0, scale: 0.97, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full h-full md:max-w-3xl md:h-[75vh] bg-card border border-border shadow-xl rounded-none md:rounded-xl overflow-hidden flex flex-col md:flex-row z-50"
           >
-            {/* Sidebar navigation */}
-            <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-border/80 bg-muted/20 p-4 shrink-0 flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible md:overflow-y-auto scrollbar-hide">
-              <div className="hidden md:flex items-center gap-2 px-2 py-3 mb-2">
-                <Settings className="w-5 h-5 text-primary" />
-                <span className="font-bold text-sm">Control Console</span>
+            {/* Sidebar */}
+            <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-border bg-card p-3 shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible md:overflow-y-auto scrollbar-hide">
+              <div className="hidden md:block px-2 py-3 mb-1">
+                <span className="font-semibold text-sm">Settings</span>
               </div>
               
-              {menuItems.map((item) => (
+              {tabs.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id as Tab)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all shrink-0 ${
+                  onClick={() => setActiveTab(item.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 text-left ${
                     activeTab === item.id
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
                 >
-                  {item.icon}
-                  <span>{item.label}</span>
+                  {item.label}
                 </button>
               ))}
               
               <button
                 onClick={onClose}
-                className="md:hidden ml-auto p-2 hover:bg-muted rounded-full text-muted-foreground"
+                className="md:hidden ml-auto p-1.5 hover:bg-accent rounded-md text-muted-foreground"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Main content pane */}
-            <div className="flex-1 flex flex-col h-full min-w-0 bg-card">
-              {/* Header */}
-              <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-border/50 shrink-0">
-                <h3 className="font-bold text-base capitalize">{activeTab} Settings</h3>
-                <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
-                  <X className="w-5 h-5" />
+            {/* Content */}
+            <div className="flex-1 flex flex-col h-full min-w-0">
+              <div className="hidden md:flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
+                <h3 className="font-medium text-sm capitalize">{activeTab}</h3>
+                <button onClick={onClose} className="p-1 hover:bg-accent rounded-md transition-colors text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Body Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 
-                {/* 1. GENERAL TAB */}
+                {/* GENERAL */}
                 {activeTab === "general" && (
                   <div className="space-y-6 animate-fade-in">
-                    {/* System Prompt */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <label className="text-xs md:text-sm font-semibold text-foreground">System Directive</label>
-                        <span className="text-[10px] text-muted-foreground/80">{systemPrompt.length} chars</span>
+                        <label className="text-xs font-medium text-foreground">System prompt</label>
+                        <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-geist-mono)]">{systemPrompt.length}</span>
                       </div>
                       <textarea
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
-                        className="w-full text-xs md:text-sm p-3.5 rounded-xl bg-muted/40 border border-border focus:ring-1 focus:ring-ring outline-none resize-none min-h-[100px] leading-relaxed font-mono"
+                        className="w-full text-sm p-3 rounded-lg bg-card border border-border focus:border-foreground/20 outline-none resize-none min-h-[100px] leading-relaxed font-[family-name:var(--font-geist-mono)] text-xs"
                         placeholder="Define AI behavior, tone, constraints..."
                       />
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        Sets the behavior parameters injected before conversation context. Affects model response style.
-                      </p>
                     </div>
 
-                    {/* Parameters Sliders */}
                     <div className="space-y-4 pt-2">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Inference Parameters</h4>
+                      <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Parameters</h4>
                       
-                      {/* Temperature */}
                       <div className="space-y-2">
-                        <div className="flex justify-between text-xs md:text-sm font-semibold">
+                        <div className="flex justify-between text-xs font-medium">
                           <span>Temperature</span>
-                          <span className="text-primary font-mono">{temperature}</span>
+                          <span className="text-muted-foreground font-[family-name:var(--font-geist-mono)]">{temperature}</span>
                         </div>
                         <input
                           type="range"
@@ -249,19 +232,18 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                           step="0.1"
                           value={temperature}
                           onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                          className="w-full accent-primary bg-muted h-1 rounded-lg cursor-pointer"
+                          className="w-full accent-foreground h-1 rounded-lg cursor-pointer bg-muted"
                         />
-                        <div className="flex justify-between text-[10px] text-muted-foreground">
-                          <span>Deterministic (0.0)</span>
-                          <span>Creative / Wild (2.0)</span>
+                        <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                          <span>Precise</span>
+                          <span>Creative</span>
                         </div>
                       </div>
 
-                      {/* Top-P */}
                       <div className="space-y-2">
-                        <div className="flex justify-between text-xs md:text-sm font-semibold">
-                          <span>Top-P (Nucleus Sampling)</span>
-                          <span className="text-primary font-mono">{topP}</span>
+                        <div className="flex justify-between text-xs font-medium">
+                          <span>Top-P</span>
+                          <span className="text-muted-foreground font-[family-name:var(--font-geist-mono)]">{topP}</span>
                         </div>
                         <input
                           type="range"
@@ -270,15 +252,14 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                           step="0.05"
                           value={topP}
                           onChange={(e) => setTopP(parseFloat(e.target.value))}
-                          className="w-full accent-primary bg-muted h-1 rounded-lg cursor-pointer"
+                          className="w-full accent-foreground h-1 rounded-lg cursor-pointer bg-muted"
                         />
                       </div>
 
-                      {/* Max Tokens */}
                       <div className="space-y-2">
-                        <div className="flex justify-between text-xs md:text-sm font-semibold">
-                          <span>Max Generation Tokens</span>
-                          <span className="text-primary font-mono">{maxTokens}</span>
+                        <div className="flex justify-between text-xs font-medium">
+                          <span>Max tokens</span>
+                          <span className="text-muted-foreground font-[family-name:var(--font-geist-mono)]">{maxTokens}</span>
                         </div>
                         <input
                           type="range"
@@ -287,26 +268,25 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                           step="256"
                           value={maxTokens}
                           onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                          className="w-full accent-primary bg-muted h-1 rounded-lg cursor-pointer"
+                          className="w-full accent-foreground h-1 rounded-lg cursor-pointer bg-muted"
                         />
                       </div>
                     </div>
 
-                    {/* Backup & Import */}
-                    <div className="pt-4 border-t border-border/50 space-y-4">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Data Synchronization</h4>
-                      <div className="flex flex-wrap gap-3">
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Data</h4>
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={handleExportChats}
-                          className="flex items-center gap-2 px-4 py-2 border border-border hover:bg-muted rounded-xl text-xs md:text-sm font-semibold text-foreground transition-all"
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-accent rounded-md text-xs font-medium text-foreground transition-colors"
                         >
-                          <Download className="w-4 h-4 text-primary" />
-                          <span>Export Conversations</span>
+                          <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                          Export
                         </button>
                         
-                        <label className="flex items-center gap-2 px-4 py-2 border border-border hover:bg-muted rounded-xl text-xs md:text-sm font-semibold text-foreground cursor-pointer transition-all">
-                          <Upload className="w-4 h-4 text-primary" />
-                          <span>Import JSON</span>
+                        <label className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-accent rounded-md text-xs font-medium text-foreground cursor-pointer transition-colors">
+                          <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                          Import
                           <input
                             type="file"
                             accept=".json"
@@ -319,28 +299,27 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                 )}
 
-                {/* 2. PROVIDERS TAB */}
+                {/* PROVIDERS */}
                 {activeTab === "providers" && (
                   <div className="space-y-6 animate-fade-in">
                     <ProviderGrid />
 
-                    {/* Search provider config */}
-                    <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-4">
+                    <div className="p-4 rounded-lg border border-border space-y-3">
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="text-xs md:text-sm font-semibold block">Search Capability Integration</span>
-                          <span className="text-[10px] text-muted-foreground">Select search engine API key to hook web search to chat</span>
+                          <span className="text-xs font-medium block">Search integration</span>
+                          <span className="text-[10px] text-muted-foreground">Connect a search API for web queries</span>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           {['tavily', 'exa'].map((engine) => (
                             <button
                               key={engine}
                               onClick={() => setSearchProvider(engine as any)}
-                              className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-colors ${
+                              className={`px-2 py-1 text-[10px] rounded-md font-medium border transition-colors capitalize ${
                                 searchProvider === engine
-                                  ? "bg-primary text-primary-foreground border-primary"
-                                  : "bg-background text-muted-foreground border-border hover:border-muted-foreground/40"
+                                  ? "bg-foreground text-background border-foreground"
+                                  : "bg-card text-muted-foreground border-border hover:border-foreground/20"
                               }`}
                             >
                               {engine}
@@ -355,15 +334,15 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             type={showTavilyKey ? "text" : "password"}
                             value={tavilyApiKey}
                             onChange={(e) => setTavilyApiKey(e.target.value)}
-                            placeholder="Tavily key (tvly-...)"
-                            className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                            placeholder="tvly-..."
+                            className="w-full text-xs bg-card border border-border rounded-md pl-3 pr-8 py-2 focus:outline-none focus:border-foreground/20 font-[family-name:var(--font-geist-mono)]"
                           />
                           <button
                             type="button"
                             onClick={() => setShowTavilyKey(!showTavilyKey)}
-                            className="absolute right-3 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2 text-muted-foreground hover:text-foreground"
                           >
-                            {showTavilyKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {showTavilyKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                           </button>
                         </div>
                       ) : (
@@ -372,15 +351,15 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             type={showExaKey ? "text" : "password"}
                             value={exaApiKey}
                             onChange={(e) => setExaApiKey(e.target.value)}
-                            placeholder="Exa key (exa-...)"
-                            className="w-full text-xs bg-background border border-border rounded-lg pl-3 pr-10 py-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                            placeholder="exa-..."
+                            className="w-full text-xs bg-card border border-border rounded-md pl-3 pr-8 py-2 focus:outline-none focus:border-foreground/20 font-[family-name:var(--font-geist-mono)]"
                           />
                           <button
                             type="button"
                             onClick={() => setShowExaKey(!showExaKey)}
-                            className="absolute right-3 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2 text-muted-foreground hover:text-foreground"
                           >
-                            {showExaKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {showExaKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                           </button>
                         </div>
                       )}
@@ -388,31 +367,31 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                 )}
 
-                {/* 3. MODELS TAB */}
+                {/* MODELS */}
                 {activeTab === "models" && (
                   <div className="space-y-4 animate-fade-in">
-                    <div className="space-y-2">
-                      <label className="text-xs md:text-sm font-semibold">Active Model Provider</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium">Provider</label>
                       <select
                         value={provider}
                         onChange={(e) => setProvider(e.target.value)}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-ring font-semibold capitalize"
+                        className="w-full bg-card border border-border rounded-md px-3 py-2 text-xs focus:outline-none focus:border-foreground/20 font-medium capitalize"
                       >
-                        <option value="" disabled>Select a provider</option>
+                        <option value="" disabled>Select provider</option>
                         {providers.map((p) => (
-                          <option key={p.id} value={p.id} className="bg-card text-foreground font-semibold">
-                            {p.name} {p.configured ? "🟢" : "⚪"}
+                          <option key={p.id} value={p.id} className="bg-card text-foreground">
+                            {p.name} {p.configured ? "●" : "○"}
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    <div className="space-y-2 pt-2">
-                      <label className="text-xs md:text-sm font-semibold">Model Registry Identifier</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium">Model</label>
                       {loadingModels ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse p-2">
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Contacting backend registry and fetching models...</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground p-2">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Loading models...</span>
                         </div>
                       ) : modelError || availableModels.length === 0 ? (
                         <>
@@ -420,13 +399,13 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             type="text"
                             value={model}
                             onChange={(e) => setModel(e.target.value)}
-                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-ring font-mono"
-                            placeholder="e.g. Qwen-3.5-7B"
+                            className="w-full bg-card border border-border rounded-md px-3 py-2 text-xs focus:outline-none focus:border-foreground/20 font-[family-name:var(--font-geist-mono)]"
+                            placeholder="e.g. gemini-2.5-pro"
                           />
-                          <p className="text-[10px] text-amber-500 bg-amber-500/10 p-2 rounded-xl border border-amber-500/20 flex gap-2 items-center leading-normal">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
+                          <p className="text-[10px] text-muted-foreground bg-muted p-2 rounded-md flex gap-2 items-start leading-normal mt-1">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                             <span>
-                              Registry fetch unavailable. You can manually enter the correct model string identifier (e.g. <code>gemini-1.5-pro</code> or <code>gpt-4o</code>) above.
+                              Auto-detection unavailable. Enter the model ID manually.
                             </span>
                           </p>
                         </>
@@ -434,10 +413,10 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                         <select
                           value={model}
                           onChange={(e) => setModel(e.target.value)}
-                          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-ring font-semibold"
+                          className="w-full bg-card border border-border rounded-md px-3 py-2 text-xs focus:outline-none focus:border-foreground/20 font-medium"
                         >
                           {availableModels.map((m) => (
-                            <option key={m} value={m} className="bg-card text-foreground font-semibold">
+                            <option key={m} value={m} className="bg-card text-foreground">
                               {m}
                             </option>
                           ))}
@@ -447,48 +426,45 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                 )}
 
-                {/* 4. APPEARANCE TAB */}
+                {/* APPEARANCE */}
                 {activeTab === "appearance" && (
                   <div className="space-y-4 animate-fade-in">
-                    <label className="text-xs md:text-sm font-semibold">Workspace Skin Theme</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <label className="text-xs font-medium">Theme</label>
+                    <div className="grid grid-cols-3 gap-2">
                       {(["light", "dark", "system"] as const).map((t) => (
                         <button
                           key={t}
                           onClick={() => setTheme(t)}
-                          className={`py-3 px-4 rounded-xl border flex flex-col items-center gap-1.5 capitalize transition-all ${
+                          className={`py-2.5 px-3 rounded-md border flex flex-col items-center gap-1 capitalize transition-colors text-xs font-medium ${
                             theme === t
-                              ? "border-primary bg-primary/10 text-foreground font-bold shadow-sm"
-                              : "border-border bg-muted/10 text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground"
+                              ? "border-foreground/20 bg-accent text-foreground"
+                              : "border-border text-muted-foreground hover:border-foreground/10 hover:text-foreground"
                           }`}
                         >
-                          <span className="text-xs font-semibold">{t} Mode</span>
+                          {t}
                         </button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      Select how AI Workspace looks. Setting Theme synchronizes layout classes, variables, code highlight blocks, and scrollbars.
-                    </p>
                   </div>
                 )}
 
-                {/* 5. SHORTCUTS TAB */}
+                {/* SHORTCUTS */}
                 {activeTab === "shortcuts" && (
-                  <div className="space-y-4 animate-fade-in select-none">
-                    <div className="divide-y divide-border/60">
+                  <div className="space-y-0 animate-fade-in select-none">
+                    <div className="divide-y divide-border">
                       {[
-                        { keys: ["CTRL", "K"], desc: "Toggle Raycast Command Palette" },
-                        { keys: ["CTRL", "N"], desc: "Open a New Chat Room" },
-                        { keys: ["CTRL", "SHIFT", "S"], desc: "Toggle Sidebar Panel" },
-                        { keys: ["CTRL", "/"], desc: "Focus Prompt Input Cursor" },
-                        { keys: ["ALT", "1-9"], desc: "Transition chats by list order" },
-                        { keys: ["ESC"], desc: "Close overlays and palettes" },
+                        { keys: ["Ctrl", "K"], desc: "Command palette" },
+                        { keys: ["Ctrl", "N"], desc: "New conversation" },
+                        { keys: ["Ctrl", "Shift", "S"], desc: "Toggle sidebar" },
+                        { keys: ["Ctrl", "/"], desc: "Focus input" },
+                        { keys: ["Alt", "1–9"], desc: "Switch chats" },
+                        { keys: ["Esc"], desc: "Close overlays" },
                       ].map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center py-2.5 text-xs md:text-sm">
-                          <span className="text-muted-foreground/90 font-medium">{item.desc}</span>
+                        <div key={idx} className="flex justify-between items-center py-2.5 text-xs">
+                          <span className="text-muted-foreground">{item.desc}</span>
                           <div className="flex gap-1">
                             {item.keys.map((k, i) => (
-                              <kbd key={i} className="px-1.5 py-0.5 rounded border border-border bg-muted/60 text-[10px] font-mono shadow-sm font-bold">
+                              <kbd key={i} className="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px] font-[family-name:var(--font-geist-mono)] text-muted-foreground">
                                 {k}
                               </kbd>
                             ))}
@@ -499,30 +475,23 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                 )}
 
-                {/* 6. ABOUT TAB */}
+                {/* ABOUT */}
                 {activeTab === "about" && (
-                  <div className="space-y-4 animate-fade-in text-center py-6 select-none">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 via-indigo-500 to-teal-500 flex items-center justify-center font-bold text-lg text-white mx-auto shadow-lg">
-                      Ω
-                    </div>
+                  <div className="space-y-4 animate-fade-in text-center py-8 select-none">
                     <div className="space-y-1">
-                      <h4 className="font-extrabold text-base md:text-lg">AI Workspace Console</h4>
-                      <p className="text-xs text-muted-foreground">v1.2.0-Alpha • Premium Orchestrator</p>
+                      <h4 className="font-semibold text-base">AI Workspace</h4>
+                      <p className="text-xs text-muted-foreground">v1.2.0</p>
                     </div>
-                    <p className="text-xs text-muted-foreground/80 max-w-sm mx-auto leading-relaxed">
-                      A premium AI operating environment designed for custom adapters, dynamic skill retrieval engines, and unified canvas side-by-side battle execution.
+                    <p className="text-xs text-muted-foreground/60 max-w-xs mx-auto leading-relaxed">
+                      A premium AI operating environment with multi-provider routing, RAG, and a dynamic skill engine.
                     </p>
-                    <div className="text-[10px] text-muted-foreground/60">
-                      Developed under pair programming constraints. All rights reserved.
-                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/50 bg-muted/20 flex justify-end shrink-0 select-none">
-                <button onClick={onClose} className="px-4.5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs md:text-sm font-semibold transition-colors shadow-sm">
-                  Apply & Close console
+              <div className="px-6 py-3 border-t border-border flex justify-end shrink-0">
+                <button onClick={onClose} className="px-4 py-2 bg-foreground text-background hover:bg-foreground/90 rounded-md text-xs font-medium transition-colors">
+                  Done
                 </button>
               </div>
             </div>

@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useAppStore, Message } from "@/store/app-store";
 import { 
-  LayoutPanelLeft, Send, Loader2, Bot, 
-  ArrowDown, Square, Sparkles, MessageSquare, Terminal 
+  PanelLeft, Send, Loader2, 
+  ArrowDown, Square
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "../ui/toast";
@@ -59,7 +59,6 @@ export function ChatArea() {
     hydrateChats();
   }, [hydrateChats]);
 
-  // Handle scroll events to toggle scroll-to-bottom FAB
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
@@ -71,26 +70,23 @@ export function ChatArea() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (mounted) {
       scrollToBottom();
     }
   }, [messages, mounted]);
 
-  // Global Keyboard Shortcuts Hook
   useKeyboardShortcuts({
     onOpenCommandPalette: () => setIsCommandPaletteOpen(prev => !prev),
     onFocusInput: () => inputRef.current?.focus(),
     onOpenShortcutOverlay: () => {
       toast.info(
-        "Workspace Shortcuts:\n• Ctrl+K: Command Palette\n• Ctrl+N: New Chat\n• Ctrl+Shift+S: Toggle Sidebar\n• Ctrl+/: Focus Prompt Input\n• Alt+1-9: Switch Chats\n• Ctrl+?: Cheat Sheet",
+        "Shortcuts:\n• Ctrl+K: Command palette\n• Ctrl+N: New chat\n• Ctrl+Shift+S: Toggle sidebar\n• Ctrl+/: Focus input\n• Alt+1-9: Switch chats",
         6000
       );
     }
   });
 
-  // Auto-title generation background request
   const generateChatTitle = async (chatId: string, userMsg: string, assistantMsg: string) => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
@@ -104,11 +100,7 @@ export function ChatArea() {
           provider,
           model,
           messages: [
-            { role: "user", content: `Review this short conversation turn:
-User: "${userMsg}"
-Assistant: "${assistantMsg}"
-
-Create a highly concise, 3-5 word title summarizing the topic of this conversation. Do not use quotes, punctuation, preamble, or markdown. Output only the title.` }
+            { role: "user", content: `Review this short conversation turn:\nUser: "${userMsg}"\nAssistant: "${assistantMsg}"\n\nCreate a highly concise, 3-5 word title summarizing the topic of this conversation. Do not use quotes, punctuation, preamble, or markdown. Output only the title.` }
           ],
         }),
       });
@@ -145,13 +137,11 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
     }
   };
 
-  // Execution engine core stream loader
   const triggerStream = async (messageList: Message[]) => {
     setIsStreaming(true);
     setIsRetrying(false);
     setRetryCount(0);
 
-    // Add assistant bubble with initial empty message
     setMessages((prev) => [...prev, { role: "assistant", content: "", timestamp: Date.now() }]);
 
     const controller = new AbortController();
@@ -162,7 +152,6 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
     let assistantText = "";
     const currentActiveChatId = useAppStore.getState().activeChatId;
 
-    // Package messages including the workspace settings system prompt
     const finalMessages = [
       { role: "system" as const, content: systemPrompt },
       ...messageList.map(m => ({ role: m.role, content: m.content }))
@@ -210,7 +199,6 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
           setIsRetrying(false);
           setRetryCount(0);
 
-          // Reset the content to start streaming clean
           setMessages((prev) => {
             const next = [...prev];
             next[next.length - 1] = { role: "assistant", content: "", timestamp: Date.now() };
@@ -247,8 +235,8 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {
-          success = true; // Complete execution on cancel signal
-          toast.info("Streaming stopped by user");
+          success = true;
+          toast.info("Stopped");
           break;
         }
 
@@ -259,7 +247,7 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
           const lastIndex = newMessages.length - 1;
           newMessages[lastIndex] = {
             role: "assistant",
-            content: `⚠️ **Connection lost.** Retrying... (Attempt ${attempt})`,
+            content: `Connection lost. Retrying... (attempt ${attempt})`,
             timestamp: Date.now()
           };
           return newMessages;
@@ -270,7 +258,6 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
     setIsStreaming(false);
     setIsRetrying(false);
 
-    // Auto Title Check
     if (currentActiveChatId && messageList.length === 1 && success && assistantText) {
       const userPrompt = messageList[0].content;
       const activeChat = useAppStore.getState().chats.find(c => c.id === currentActiveChatId);
@@ -301,7 +288,6 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
   };
 
   const handleEditMessage = async (idx: number, newContent: string) => {
-    // Slice off all subsequent responses starting from edit index
     const truncatedHistory = messages.slice(0, idx).concat({ 
       role: "user", 
       content: newContent, 
@@ -312,7 +298,6 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
   };
 
   const handleRegenerateResponse = async (idx: number) => {
-    // Slice history right before the assistant message to be regenerated
     const truncatedHistory = messages.slice(0, idx);
     setMessages(truncatedHistory);
     await triggerStream(truncatedHistory);
@@ -332,92 +317,70 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
   if (!mounted) {
     return (
       <div className="flex-1 flex flex-col h-full bg-background items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
-
-  // Get current active chat's meta provider details
-  const getProviderBadgeColor = () => {
-    switch (provider.toLowerCase()) {
-      case "google": return "text-blue-500 bg-blue-500/10 border-blue-500/20";
-      case "openai": return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-      default: return "text-amber-500 bg-amber-500/10 border-amber-500/20";
-    }
-  };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative min-w-0">
       
       {/* Header */}
-      <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background/60 backdrop-blur-md sticky top-0 z-10 select-none">
+      <header className="h-12 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10 select-none">
         <div className="flex items-center gap-3">
           {!sidebarOpen && (
             <button 
               onClick={toggleSidebar} 
-              className="p-1.5 hover:bg-muted rounded-xl transition-all"
+              className="p-1 hover:bg-accent rounded-md transition-colors"
             >
-              <LayoutPanelLeft className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+              <PanelLeft className="w-4 h-4 text-muted-foreground" />
             </button>
           )}
-          <div className="flex items-center gap-2">
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded border capitalize tracking-wider", getProviderBadgeColor())}>
-              {provider}
-            </span>
-            <span className="text-xs font-semibold text-muted-foreground truncate max-w-40 md:max-w-none">{model}</span>
-          </div>
+          <span className="text-xs text-muted-foreground font-medium tracking-wide">{model}</span>
         </div>
 
-        {/* Header Actions */}
         <div className="flex items-center gap-2">
           <SkillIndicator />
-          {/* Command Palette trigger */}
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-border/80 hover:border-border rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
           >
-            <span className="text-[10px]">Command Menu</span>
-            <kbd className="px-1 bg-muted border border-border rounded text-[9px] font-mono">⌘K</kbd>
+            <kbd className="text-[10px] font-[family-name:var(--font-geist-mono)] text-muted-foreground">⌘K</kbd>
           </button>
         </div>
       </header>
 
-      {/* Connection retry banner */}
+      {/* Retry banner */}
       {isRetrying && (
-        <div className="bg-amber-500/15 border-b border-amber-500/20 text-amber-500 text-xs px-4 py-2 flex items-center gap-2 animate-pulse shrink-0 select-none font-semibold">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Connection severed. Retrying query (Attempt {retryCount})...</span>
+        <div className="bg-muted border-b border-border text-muted-foreground text-xs px-4 py-2 flex items-center gap-2 shrink-0 select-none">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>Retrying (attempt {retryCount})...</span>
         </div>
       )}
 
-      {/* Messages area */}
+      {/* Messages */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 relative"
+        className="flex-1 overflow-y-auto p-4 md:p-8 space-y-1 relative"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.45 }}
-              className="w-full max-w-2xl text-center space-y-6 select-none"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-xl text-center space-y-8 select-none"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500 via-indigo-500 to-teal-500 flex items-center justify-center shadow-lg mx-auto animate-float">
-                <span className="text-white text-lg font-black">Ω</span>
-              </div>
-              
-              <div className="space-y-2">
-                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gradient-primary">
-                  Orchestrate your workflow
+              <div className="space-y-3">
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+                  What can I help with?
                 </h1>
-                <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                  Start a private, localized session with {model}. Setup API keys and directives in control console.
+                <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  Start a conversation with {model}.
                 </p>
               </div>
 
-              {/* Suggested Starters Grid */}
               <SuggestedPrompts onSelectPrompt={(prompt) => {
                 setInput(prompt);
                 setTimeout(() => {
@@ -448,30 +411,30 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
         <div ref={bottomRef} />
       </div>
 
-      {/* Scroll-to-bottom FAB */}
+      {/* Scroll FAB */}
       <AnimatePresence>
         {showScrollFAB && (
           <motion.button
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
             onClick={scrollToBottom}
-            className="absolute bottom-[90px] right-8 z-10 p-2.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform active:scale-95 cursor-pointer"
+            className="absolute bottom-[88px] right-6 z-10 p-2 rounded-full bg-accent hover:bg-accent/80 text-foreground border border-border shadow-sm transition-colors cursor-pointer"
             title="Scroll to bottom"
           >
-            <ArrowDown className="w-4 h-4 animate-bounce" />
+            <ArrowDown className="w-3.5 h-3.5" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Input area */}
-      <div className="p-4 bg-gradient-to-t from-background via-background to-transparent pt-10 shrink-0">
-        <div className="max-w-3xl mx-auto relative">
+      {/* Input */}
+      <div className="p-4 pt-2 shrink-0">
+        <div className="max-w-2xl mx-auto relative">
           <form 
             onSubmit={handleSubmit} 
-            className="relative flex items-end gap-2 bg-card/40 border border-border/80 rounded-2xl p-2 shadow-md focus-within:ring-1 focus-within:ring-ring transition-shadow backdrop-blur-sm"
+            className="relative flex items-end gap-2 bg-card border border-border rounded-xl p-2 focus-within:border-foreground/20 transition-colors"
           >
-            <div className="pl-1 pb-1 shrink-0">
+            <div className="pl-0.5 pb-0.5 shrink-0">
               <RagToggle />
             </div>
             
@@ -485,41 +448,39 @@ Create a highly concise, 3-5 word title summarizing the topic of this conversati
                   handleSubmit(e);
                 }
               }}
-              placeholder="Query AI Workspace (Press Enter)..."
-              className="w-full max-h-48 min-h-[44px] bg-transparent border-none focus:ring-0 resize-none px-3 py-3 text-xs md:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none scrollbar-hide font-medium leading-relaxed"
+              placeholder="Message..."
+              className="w-full max-h-48 min-h-[40px] bg-transparent border-none focus:ring-0 resize-none px-2 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none scrollbar-hide leading-relaxed"
               rows={1}
             />
             
-            {/* Context/Streaming stop buttons */}
             {isStreaming ? (
               <button
                 type="button"
                 onClick={handleStopGeneration}
-                className="p-3 bg-rose-600 text-white hover:bg-rose-500 rounded-xl transition-all shrink-0 mb-0.5 shadow-sm cursor-pointer"
-                title="Stop generation"
+                className="p-2.5 bg-foreground text-background hover:bg-foreground/90 rounded-lg transition-colors shrink-0 cursor-pointer"
+                title="Stop"
               >
-                <Square className="w-4 h-4 fill-current" />
+                <Square className="w-3.5 h-3.5 fill-current" />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="p-3 bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed rounded-xl hover:bg-primary/95 transition-all shrink-0 mb-0.5 shadow-sm cursor-pointer"
-                title="Send query"
+                className="p-2.5 bg-foreground text-background disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-foreground/90 transition-colors shrink-0 cursor-pointer"
+                title="Send"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-3.5 h-3.5" />
               </button>
             )}
           </form>
-          <div className="text-center mt-2.5 select-none">
-            <span className="text-[10px] text-muted-foreground/80">
-              Shortcut: press <kbd className="px-1 bg-muted rounded border text-[9px]">Ctrl+/</kbd> to focus prompt box. Private and localized inference workspace.
+          <div className="text-center mt-2 select-none">
+            <span className="text-[10px] text-muted-foreground/40">
+              Press <kbd className="font-[family-name:var(--font-geist-mono)]">Enter</kbd> to send · <kbd className="font-[family-name:var(--font-geist-mono)]">Shift+Enter</kbd> for new line
             </span>
           </div>
         </div>
       </div>
 
-      {/* Command Palette Overlay */}
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
     </div>
   );

@@ -26,6 +26,7 @@ class OpenAICompatibleProvider(BaseProvider):
         search_provider = kwargs.pop("search_provider", "tavily")
         tavily_api_key = kwargs.pop("tavily_api_key", None)
         exa_api_key = kwargs.pop("exa_api_key", None)
+        user_id = kwargs.pop("user_id", "default_user")
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
         tools = kwargs.get("tools")
@@ -77,7 +78,6 @@ class OpenAICompatibleProvider(BaseProvider):
                         "exa_api_key": exa_api_key,
                         **args
                     }
-                    user_id = kwargs.get("user_id", "default_user")
                     exec_result = await skill_executor.execute_skill(
                         skill_name=tool_name,
                         arguments=exec_args,
@@ -99,6 +99,7 @@ class OpenAICompatibleProvider(BaseProvider):
                     search_provider=search_provider,
                     tavily_api_key=tavily_api_key,
                     exa_api_key=exa_api_key,
+                    user_id=user_id,
                     **kwargs
                 )
             
@@ -108,6 +109,7 @@ class OpenAICompatibleProvider(BaseProvider):
         search_provider = kwargs.pop("search_provider", "tavily")
         tavily_api_key = kwargs.pop("tavily_api_key", None)
         exa_api_key = kwargs.pop("exa_api_key", None)
+        user_id = kwargs.pop("user_id", "default_user")
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
         tools = kwargs.get("tools")
@@ -201,7 +203,6 @@ class OpenAICompatibleProvider(BaseProvider):
                         "exa_api_key": exa_api_key,
                         **args
                     }
-                    user_id = kwargs.get("user_id", "default_user")
                     exec_result = await skill_executor.execute_skill(
                         skill_name=tool_name,
                         arguments=exec_args,
@@ -223,6 +224,7 @@ class OpenAICompatibleProvider(BaseProvider):
                     search_provider=search_provider,
                     tavily_api_key=tavily_api_key,
                     exa_api_key=exa_api_key,
+                    user_id=user_id,
                     **kwargs
                 ):
                     yield chunk

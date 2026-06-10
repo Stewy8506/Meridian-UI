@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { apiRequest } from "@/lib/api-client";
-import { Wrench, Check, Shield, Circle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SimpleSkill {
@@ -36,7 +36,6 @@ export function SkillIndicator() {
     }
   }, [isOpen]);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,60 +47,47 @@ export function SkillIndicator() {
   }, []);
 
   return (
-    <div className="relative font-sans select-none" ref={dropdownRef}>
-      {/* Indicator Chip */}
+    <div className="relative select-none" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "h-9 px-3 rounded-xl border border-white/5 bg-zinc-900/60 dark:bg-zinc-950/40 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800/40 hover:border-white/10 flex items-center gap-1.5 cursor-pointer transition-all duration-200",
-          isOpen && "bg-zinc-800/60 border-white/10 text-white"
+          "px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent flex items-center gap-1 cursor-pointer transition-colors",
+          isOpen && "bg-accent text-foreground"
         )}
       >
-        <Wrench className="w-3.5 h-3.5 text-purple-400" />
         <span>Skills</span>
-        <span className="bg-purple-500/20 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded-full text-[9px] font-bold">
-          {loading ? "..." : enabledSkills.length || 0}
+        <span className="text-[9px] text-muted-foreground font-[family-name:var(--font-geist-mono)]">
+          {loading ? "…" : enabledSkills.length}
         </span>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-zinc-900 border border-white/5 rounded-2xl shadow-xl z-40 p-3 flex flex-col gap-1.5 animate-fadeIn">
-          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2.5 pb-1 border-b border-white/5 mb-1.5">
-            Active Capabilities
+        <div className="absolute right-0 mt-1 w-52 bg-popover border border-border rounded-lg shadow-md z-40 p-1.5">
+          <div className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.1em] px-2 py-1 border-b border-border mb-1">
+            Active skills
           </div>
 
           {loading && enabledSkills.length === 0 ? (
-            <div className="py-4 flex justify-center">
-              <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+            <div className="py-3 flex justify-center">
+              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
             </div>
           ) : enabledSkills.length === 0 ? (
-            <div className="py-3 px-2.5 text-xs text-zinc-500">
-              No skills currently enabled.
+            <div className="py-2 px-2 text-[10px] text-muted-foreground">
+              No skills enabled.
             </div>
           ) : (
-            <div className="max-h-60 overflow-y-auto scrollbar-thin flex flex-col gap-0.5 pr-0.5">
+            <div className="max-h-48 overflow-y-auto flex flex-col gap-0.5">
               {enabledSkills.map((skill) => (
                 <div
                   key={skill.name}
-                  className="flex items-center justify-between px-2.5 py-2 hover:bg-white/5 rounded-xl text-xs text-zinc-200 transition-colors"
+                  className="flex items-center justify-between px-2 py-1.5 rounded-md text-xs text-foreground hover:bg-accent transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <Circle className="w-1.5 h-1.5 fill-purple-400 text-purple-400 shrink-0" />
-                    <span className="font-medium truncate max-w-[130px]" title={skill.display_name}>
-                      {skill.display_name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[9px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md uppercase font-mono">
-                      {skill.category}
-                    </span>
-                    {skill.is_dangerous && (
-                      <span title="Has execution risks">
-                        <Shield className="w-3 h-3 text-rose-400" />
-                      </span>
-                    )}
-                  </div>
+                  <span className="font-medium truncate" title={skill.display_name}>
+                    {skill.display_name}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-[family-name:var(--font-geist-mono)] shrink-0 ml-2">
+                    {skill.category}
+                  </span>
                 </div>
               ))}
             </div>
