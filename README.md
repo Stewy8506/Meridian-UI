@@ -7,7 +7,7 @@
   <p><b>A self-hosted, full-stack AI operating environment designed for power users.</b></p>
   
   <p>
-    Seamlessly route requests across 25+ LLM providers, build dynamic tools with a custom skill engine, execute local Python code instantly, and manage context with enterprise-grade RAG—all wrapped in a beautifully sleek Next.js interface.
+    Seamlessly route requests across 25+ LLM providers, build dynamic tools with a custom skill engine, execute local Python code instantly, and manage context with local RAG—all from a single Next.js interface.
   </p>
 
   <br />
@@ -23,7 +23,7 @@ AI Workspace is built for developers, researchers, and power users who demand **
 
 ---
 
-## 🚀 Flagship Features
+## 🚀 Features
 
 ### 🌐 Universal Multi-Provider LLM Routing
 Switch seamlessly between **25+ providers** from a single unified interface. 
@@ -31,7 +31,7 @@ Switch seamlessly between **25+ providers** from a single unified interface.
 - **Provider Health:** Live connection status and per-provider credential management are surfaced directly in your settings dashboard.
 
 ### 🧠 Dynamic Skill Engine (Agentic Tools)
-Equip your AI with real-time capabilities. A blazing-fast, two-stage intent router uses keyword heuristics and TF-IDF cosine similarity to dynamically select the best tools for any given prompt, bypassing context window bloat.
+Equip your AI with real-time capabilities. A two-stage intent router uses keyword heuristics and TF-IDF cosine similarity to dynamically select the best tools for any given prompt, bypassing context window bloat.
 - **Auto-registering:** Drop a Python script in the skills directory, and it is instantly registered.
 - **Built-in Arsenal:** Web search (Tavily/Exa), Wikipedia, ArXiv search, local memory recall, date/time utilities, and JSON transformations.
 - **Marketplace UI:** Browse, toggle, and live-test your tools right from the dashboard.
@@ -42,10 +42,8 @@ Your personal, privacy-first knowledge base.
 - **Smart Chunking:** Documents are processed with sentence-aligned overlap to preserve semantic context.
 - **Vector Search:** Embedded locally using `all-MiniLM-L6-v2` (with OpenAI/Gemini fallbacks) and stored in a lightweight SQLite/ChromaDB hybrid backend. Pick and choose which collections to augment on a per-conversation basis.
 
-### 🎙️ Multimodal & Local Sandbox
-Interact with your AI naturally, and let it work autonomously.
-- **Speech & Vision:** Browser-native Speech-to-Text (Voice Input) and Text-to-Speech (TTS). Drag-and-drop image uploads for vision-enabled models.
-- **Local Python Sandbox:** A completely isolated local code execution environment. Hit "Run Code" on any Python block to execute it via a secure local subprocess and see output and plots streamed live directly in your chat.
+### 🐍 Local Python Sandbox
+A completely isolated local code execution environment. Hit "Run Code" on any Python block to execute it via a secure local subprocess and see output and plots streamed live directly in your chat.
 
 ### 📊 Usage Telemetry & Cost Analytics
 Track token usage and expenses with detailed visualization charts.
@@ -58,7 +56,7 @@ Track token usage and expenses with detailed visualization charts.
 Compare multiple LLMs side-by-side on identical prompts to evaluate response quality.
 - **Concurrent Streaming Broker:** Pulls outputs from two distinct providers concurrently using an async queue-merging broker, streaming both responses in real-time over a single SSE channel.
 - **Blind Evaluation Mode:** Hides model names and identities during streaming and voting to eliminate cognitive bias.
-- **Dynamic Leaderboard:** Chess-style Elo rating standing tracking ($K=32$) automatically updates model ranks based on user votes and ties.
+- **Dynamic Leaderboard:** Chess-style Elo rating standing tracking (K=32) automatically updates model ranks based on user votes and ties.
 
 ### 🎭 Custom AI Personas
 Equip your workspace with specialized AI agents tailored to specific tasks.
@@ -83,18 +81,16 @@ Create, categorize, and autocomplete template shortcuts.
 - **Auto Variables Extractor:** Automatically parses variable placeholders (e.g., `{{topic}}`, `{{language}}`) from prompt templates.
 - **Prompt Compiling Form:** Displays a custom input form to replace placeholders before inserting compiled text into the chat prompt area.
 
-### ⚙️ Admin Controls & Interface Personalization
-Make the workspace truly yours with personalized settings saved to your profile and global admin controls.
-- **Interface Personalization:** Choose custom font sizes, centered or wide layouts, bubble styles, code block behavior, enter-key sending preferences, and streaming text speeds.
-- **Custom CSS Injector:** Write custom CSS selectors directly in the settings menu to override any visual style in the interface.
-- **Dynamic Hotkey Remapping:** Rebind system shortcuts (focus prompt box, open command palette, hide overlays, switch chats, toggle sidebar) dynamically.
-- **Workspace Admin Dashboard:** System administrators can toggle registration options, whitelist email domains (CSV format), and view live audit trails of diagnostic system connections (Ollama, Gemini, Vector stores, etc.).
-
-### 🔐 Enterprise-Grade Auth & Persistence
+### 🔐 Secure Auth & State Persistence
 Security and state management you can trust.
 - **Multi-User Isolation:** JWT authentication with bcrypt password hashing ensures complete privacy.
 - **Encrypted Keys:** Your provider API keys are encrypted at rest using Fernet (AES-128-CBC) and only decrypted in memory.
 - **Advanced State:** Pin, tag, branch, and fork conversations. Fully compatible with OpenWebUI history imports.
+
+### 🔌 Interface & Additional Capabilities
+- **Multimodal Inputs:** Browser-native Speech-to-Text (Voice Input) and Text-to-Speech (TTS) alongside vision support for compatible models.
+- **Interface Customization:** Adjust layout densities, toggle panel sizes, customize keyboard shortcuts, and write custom CSS overrides directly in the settings panel.
+- **Workspace Administration:** Toggle open registrations, whitelist specific email domains (CSV format), and view live audit trails of diagnostic backend connections (Ollama, Gemini, vector store, etc.).
 
 ---
 
@@ -180,5 +176,5 @@ Start both the frontend and backend simultaneously using the root launcher:
 
 ---
 <div align="center">
-  <i>Designed for developers who refuse to compromise on their AI workflow.</i>
+  <i>A modular, self-hosted console for universal model orchestrations and structured AI workspace apps.</i>
 </div>
