@@ -38,6 +38,14 @@ def on_startup():
     from app.database.session import engine
     Base.metadata.create_all(bind=engine)
     
+    # Auto-migration: check if conversation_id column exists in canvas_documents table
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        result = conn.execute(text("PRAGMA table_info(canvas_documents);"))
+        columns = [row[1] for row in result.fetchall()]
+        if "conversation_id" not in columns:
+            conn.execute(text("ALTER TABLE canvas_documents ADD COLUMN conversation_id VARCHAR;"))
+    
     # Run skill auto-discovery
     from app.skills.registry import skill_registry
     skill_registry.discover()

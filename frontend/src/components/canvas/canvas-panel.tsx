@@ -34,7 +34,7 @@ interface CanvasVersionItem {
 }
 
 export function CanvasPanel() {
-  const { canvasOpen, setCanvasOpen, activeCanvasFileId, setActiveCanvasFileId } = useAppStore();
+  const { canvasOpen, setCanvasOpen, activeCanvasFileId, setActiveCanvasFileId, activeChatId } = useAppStore();
 
   const [files, setFiles] = useState<CanvasDocListItem[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
@@ -64,11 +64,18 @@ export function CanvasPanel() {
   const fetchFiles = async (selectLatest = false) => {
     setLoadingFiles(true);
     try {
-      const res = await apiRequest<{ documents: CanvasDocListItem[] }>("/api/canvas");
-      setFiles(res.documents || []);
+      const url = activeChatId ? `/api/canvas?conversation_id=${activeChatId}` : "/api/canvas";
+      const res = await apiRequest<{ documents: CanvasDocListItem[] }>(url);
+      const docs = res.documents || [];
+      setFiles(docs);
       
-      if (selectLatest && res.documents && res.documents.length > 0) {
-        setActiveCanvasFileId(res.documents[0].id);
+      if (selectLatest) {
+        if (docs.length > 0) {
+          setActiveCanvasFileId(docs[0].id);
+        } else {
+          setActiveCanvasFileId(null);
+          setActiveDoc(null);
+        }
       }
     } catch (err) {
       console.error("Failed to load canvas files:", err);
@@ -77,11 +84,21 @@ export function CanvasPanel() {
     }
   };
 
+  // Fetch files list on mount/open
   useEffect(() => {
     if (canvasOpen) {
       fetchFiles(activeCanvasFileId ? false : true);
     }
   }, [canvasOpen]);
+
+  // Reset selected file when active chat changes
+  useEffect(() => {
+    setActiveCanvasFileId(null);
+    setActiveDoc(null);
+    if (canvasOpen) {
+      fetchFiles(true);
+    }
+  }, [activeChatId]);
 
   // Load active document when ID changes
   useEffect(() => {
@@ -162,7 +179,8 @@ export function CanvasPanel() {
         body: JSON.stringify({
           filename: activeDoc.filename,
           content: editorContent,
-          language: activeDoc.language
+          language: activeDoc.language,
+          conversation_id: activeChatId
         })
       });
       toast.success("Changes saved successfully!");
@@ -190,7 +208,8 @@ export function CanvasPanel() {
         body: JSON.stringify({
           filename: activeDoc.filename,
           content: historicalContent,
-          language: activeDoc.language
+          language: activeDoc.language,
+          conversation_id: activeChatId
         })
       });
       toast.success(`Restored to version ${versionNum}!`);

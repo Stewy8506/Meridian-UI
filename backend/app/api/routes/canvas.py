@@ -15,18 +15,24 @@ class CanvasSaveRequest(BaseModel):
     filename: str
     content: str
     language: Optional[str] = "markdown"
+    conversation_id: Optional[str] = None
 
 @router.get("")
 async def get_canvas_documents(
+    conversation_id: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Retrieve all canvas documents owned by the user.
     """
-    docs = db.query(CanvasDocument).filter(
+    query = db.query(CanvasDocument).filter(
         CanvasDocument.user_id == str(current_user.id)
-    ).order_by(CanvasDocument.updated_at.desc()).all()
+    )
+    if conversation_id:
+        query = query.filter(CanvasDocument.conversation_id == conversation_id)
+        
+    docs = query.order_by(CanvasDocument.updated_at.desc()).all()
     
     return {
         "status": "success",
@@ -96,7 +102,8 @@ async def save_canvas_document(
         
     doc = db.query(CanvasDocument).filter(
         CanvasDocument.user_id == str(current_user.id),
-        CanvasDocument.filename == filename
+        CanvasDocument.filename == filename,
+        CanvasDocument.conversation_id == payload.conversation_id
     ).first()
     
     if doc:
@@ -109,7 +116,8 @@ async def save_canvas_document(
             filename=filename,
             content=payload.content,
             language=payload.language or "markdown",
-            version=1
+            version=1,
+            conversation_id=payload.conversation_id
         )
         db.add(doc)
         

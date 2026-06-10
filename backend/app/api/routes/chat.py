@@ -23,6 +23,7 @@ class ChatRequest(BaseModel):
     tavily_api_key: Optional[str] = None
     exa_api_key: Optional[str] = None
     knowledge_base_ids: Optional[List[str]] = None
+    conversation_id: Optional[str] = None
 
 def estimate_tokens(text: str) -> int:
     # ~4 characters per token as a rough average heuristic
@@ -125,7 +126,8 @@ async def chat_completions(
                 search_provider=request.search_provider,
                 tavily_api_key=tavily_api_key,
                 exa_api_key=exa_api_key,
-                user_id=current_user.id if current_user else "default_user"
+                user_id=current_user.id if current_user else "default_user",
+                conversation_id=request.conversation_id
             ):
                 if await req.is_disconnected():
                     break

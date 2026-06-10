@@ -9,6 +9,7 @@ class CanvasDocument(Base):
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"), index=True)
+    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=True, index=True)
     filename = Column(String, index=True)
     content = Column(Text)
     language = Column(String, default="markdown")

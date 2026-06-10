@@ -79,12 +79,14 @@ export function CodeBlock({ children }: CodeBlockProps) {
     setPushingToCanvas(true);
     try {
       const inferredFilename = inferFilename(rawCode, language);
+      const activeChatId = useAppStore.getState().activeChatId;
       const res = await apiRequest<any>("/api/canvas", {
         method: "POST",
         body: JSON.stringify({
           filename: inferredFilename,
           content: rawCode,
-          language: language
+          language: language,
+          conversation_id: activeChatId
         })
       });
       if (res.status === "success") {

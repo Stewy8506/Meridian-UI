@@ -70,6 +70,10 @@ interface AppState {
   ttsPitch: number;
   autoSpeak: boolean;
   sttLanguage: string;
+  
+  // Scoped input draft states per conversation
+  drafts: Record<string, string>;
+  setDraft: (chatId: string, text: string) => void;
 
   // Shortcuts settings map
   shortcuts: {
@@ -180,6 +184,8 @@ export const useAppStore = create<AppState>()(
       ttsPitch: 1.0,
       autoSpeak: false,
       sttLanguage: 'en-US',
+      
+      drafts: {},
 
       // Shortcuts defaults
       shortcuts: {
@@ -199,6 +205,7 @@ export const useAppStore = create<AppState>()(
 
       setProvider: (provider) => set({ provider }),
       setModel: (model) => set({ model }),
+      setDraft: (chatId, text) => set((state) => ({ drafts: { ...state.drafts, [chatId]: text } })),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setOpenaiApiKey: (key) => set({ openaiApiKey: key }),

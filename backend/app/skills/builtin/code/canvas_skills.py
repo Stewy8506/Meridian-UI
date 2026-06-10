@@ -43,6 +43,7 @@ class CanvasWriteSkill(BaseSkill):
         content: str = kwargs.get("content", "")
         language: str = kwargs.get("language", "markdown").strip().lower()
         user_id: str = kwargs.get("user_id", "default_user")
+        conversation_id: str = kwargs.get("conversation_id")
 
         if not filename or not content:
             return SkillResult(
@@ -57,7 +58,8 @@ class CanvasWriteSkill(BaseSkill):
             # Check if document exists
             doc = db.query(CanvasDocument).filter(
                 CanvasDocument.user_id == user_id,
-                CanvasDocument.filename == filename
+                CanvasDocument.filename == filename,
+                CanvasDocument.conversation_id == conversation_id
             ).first()
 
             if doc:
@@ -70,7 +72,8 @@ class CanvasWriteSkill(BaseSkill):
                     filename=filename,
                     content=content,
                     language=language,
-                    version=1
+                    version=1,
+                    conversation_id=conversation_id
                 )
                 db.add(doc)
             
@@ -138,6 +141,7 @@ class CanvasReadSkill(BaseSkill):
         start_time = time.monotonic()
         filename: str = kwargs.get("filename", "").strip()
         user_id: str = kwargs.get("user_id", "default_user")
+        conversation_id: str = kwargs.get("conversation_id")
 
         if not filename:
             return SkillResult(
@@ -151,7 +155,8 @@ class CanvasReadSkill(BaseSkill):
         try:
             doc = db.query(CanvasDocument).filter(
                 CanvasDocument.user_id == user_id,
-                CanvasDocument.filename == filename
+                CanvasDocument.filename == filename,
+                CanvasDocument.conversation_id == conversation_id
             ).first()
 
             elapsed = (time.monotonic() - start_time) * 1000

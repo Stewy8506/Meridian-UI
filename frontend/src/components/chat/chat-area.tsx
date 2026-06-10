@@ -46,10 +46,19 @@ export function ChatArea() {
     maxTokens,
     activeKbIds,
     canvasOpen,
-    setCanvasOpen
+    setCanvasOpen,
+    drafts,
+    setDraft
   } = useAppStore();
   
-  const [input, setInput] = useState("");
+  const input = (activeChatId && drafts[activeChatId]) || "";
+  const setInput = (textOrFn: string | ((prev: string) => string)) => {
+    if (activeChatId) {
+      const currentVal = drafts[activeChatId] || "";
+      const newVal = typeof textOrFn === "function" ? textOrFn(currentVal) : textOrFn;
+      setDraft(activeChatId, newVal);
+    }
+  };
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);

@@ -27,6 +27,7 @@ class OpenAICompatibleProvider(BaseProvider):
         tavily_api_key = kwargs.pop("tavily_api_key", None)
         exa_api_key = kwargs.pop("exa_api_key", None)
         user_id = kwargs.pop("user_id", "default_user")
+        conversation_id = kwargs.pop("conversation_id", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
         tools = kwargs.get("tools")
@@ -79,6 +80,7 @@ class OpenAICompatibleProvider(BaseProvider):
                             "search_provider": search_provider,
                             "tavily_api_key": tavily_api_key,
                             "exa_api_key": exa_api_key,
+                            "conversation_id": conversation_id,
                             **args
                         }
                         exec_result = await skill_executor.execute_skill(
@@ -103,6 +105,7 @@ class OpenAICompatibleProvider(BaseProvider):
                         tavily_api_key=tavily_api_key,
                         exa_api_key=exa_api_key,
                         user_id=user_id,
+                        conversation_id=conversation_id,
                         is_fallback_attempt=is_fallback_attempt,
                         **kwargs
                     )
@@ -122,6 +125,7 @@ class OpenAICompatibleProvider(BaseProvider):
                         tavily_api_key=tavily_api_key,
                         exa_api_key=exa_api_key,
                         user_id=user_id,
+                        conversation_id=conversation_id,
                         is_fallback_attempt=True,
                         **kwargs
                     )
@@ -133,6 +137,7 @@ class OpenAICompatibleProvider(BaseProvider):
         tavily_api_key = kwargs.pop("tavily_api_key", None)
         exa_api_key = kwargs.pop("exa_api_key", None)
         user_id = kwargs.pop("user_id", "default_user")
+        conversation_id = kwargs.pop("conversation_id", None)
         clean_model = model.replace("models/", "") if model.startswith("models/") else model
         
         tools = kwargs.get("tools")
@@ -213,6 +218,7 @@ class OpenAICompatibleProvider(BaseProvider):
                         tavily_api_key=tavily_api_key,
                         exa_api_key=exa_api_key,
                         user_id=user_id,
+                        conversation_id=conversation_id,
                         is_fallback_attempt=True,
                         **kwargs
                     ):
@@ -247,6 +253,7 @@ class OpenAICompatibleProvider(BaseProvider):
                         "search_provider": search_provider,
                         "tavily_api_key": tavily_api_key,
                         "exa_api_key": exa_api_key,
+                        "conversation_id": conversation_id,
                         **args
                     }
                     exec_result = await skill_executor.execute_skill(
@@ -271,6 +278,7 @@ class OpenAICompatibleProvider(BaseProvider):
                     tavily_api_key=tavily_api_key,
                     exa_api_key=exa_api_key,
                     user_id=user_id,
+                    conversation_id=conversation_id,
                     is_fallback_attempt=is_fallback_attempt,
                     **kwargs
                 ):
