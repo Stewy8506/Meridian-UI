@@ -34,7 +34,15 @@ interface CanvasVersionItem {
 }
 
 export function CanvasPanel() {
-  const { canvasOpen, setCanvasOpen, activeCanvasFileId, setActiveCanvasFileId, activeChatId } = useAppStore();
+  const { 
+    canvasOpen, 
+    setCanvasOpen, 
+    activeCanvasFileId, 
+    setActiveCanvasFileId, 
+    activeChatId,
+    messages,
+    isStreaming
+  } = useAppStore();
 
   const [files, setFiles] = useState<CanvasDocListItem[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
@@ -144,6 +152,64 @@ export function CanvasPanel() {
 
     loadHistoryContent();
   }, [selectedHistoricalVersion]);
+
+  // Monitor messages and isStreaming to extract real-time code updates
+  useEffect(() => {
+    if (!isStreaming) return;
+    
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role !== "assistant") return;
+    
+    // Match the canvas_write block
+    const match = lastMsg.content.match(/<canvas_write\s+filename="([^"]*)"(?:\s+language="([^"]*)")?>([\s\S]*?)(?:<\/canvas_write>|$)/);
+    if (match) {
+      const [, filename, language, body] = match;
+      
+      // Auto-open canvas and switch to preview tab
+      setCanvasOpen(true);
+      setActiveTab("preview");
+      
+      setActiveDoc({
+        id: "streaming-doc",
+        filename,
+        content: body,
+        language: language || "html",
+        version: 1
+      });
+      setEditorContent(body);
+    }
+  }, [messages, isStreaming, setCanvasOpen, setActiveTab, setActiveDoc, setEditorContent]);
+
+  // When streaming finishes, reload the file list and auto-select/load the actual saved document from DB
+  useEffect(() => {
+    if (!isStreaming && activeDoc?.id === "streaming-doc") {
+      const reloadAfterStream = async () => {
+        setLoadingDoc(true);
+        try {
+          const url = activeChatId ? `/api/canvas?conversation_id=${activeChatId}` : "/api/canvas";
+          const res = await apiRequest<{ documents: CanvasDocListItem[] }>(url);
+          const docs = res.documents || [];
+          setFiles(docs);
+          
+          const matchingDoc = docs.find(d => d.filename === activeDoc.filename);
+          if (matchingDoc) {
+            setActiveCanvasFileId(matchingDoc.id);
+          } else if (docs.length > 0) {
+            setActiveCanvasFileId(docs[0].id);
+          } else {
+            setActiveCanvasFileId(null);
+            setActiveDoc(null);
+          }
+        } catch (err) {
+          console.error("Failed to reload document after stream:", err);
+        } finally {
+          setLoadingDoc(false);
+        }
+      };
+      
+      reloadAfterStream();
+    }
+  }, [isStreaming, activeDoc, activeChatId, setActiveCanvasFileId, setActiveDoc, setFiles]);
 
   // Handle manual resizing
   useEffect(() => {

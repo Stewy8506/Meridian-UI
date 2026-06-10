@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Message } from "@/store/app-store";
 import { 
   Copy, Check, Edit2, RotateCcw, 
-  ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, Loader2, Brain 
+  ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, Loader2, Brain, FileCode 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -17,19 +17,21 @@ import { SkillResult } from "./skill-result";
 import { TTSPlayer } from "./tts-player";
 
 interface ContentSegment {
-  type: 'thought' | 'skill' | 'text';
+  type: 'thought' | 'skill' | 'text' | 'canvas_write';
   content: string;
   isStreaming?: boolean;
   skillName?: string;
   skillTime?: string;
   skillStatus?: string;
+  filename?: string;
+  language?: string;
 }
 
 function parseMessageContent(content: string): ContentSegment[] {
   if (!content) return [];
   
   const segments: ContentSegment[] = [];
-  const tokenRegex = /(<thought>[\s\S]*?(?:<\/thought>|$)|<skill_result[^>]*>[\s\S]*?(?:<\/skill_result>|$))/g;
+  const tokenRegex = /(<thought>[\s\S]*?(?:<\/thought>|$)|<skill_result[^>]*>[\s\S]*?(?:<\/skill_result>|$)|<canvas_write[^>]*>[\s\S]*?(?:<\/canvas_write>|$))/g;
   
   const parts = content.split(tokenRegex);
   
@@ -60,6 +62,24 @@ function parseMessageContent(content: string): ContentSegment[] {
           skillTime: time || "",
           skillStatus: status || "success",
           content: body
+        });
+      } else {
+        segments.push({
+          type: 'text',
+          content: part
+        });
+      }
+    } else if (part.startsWith('<canvas_write')) {
+      const match = part.match(/<canvas_write\s+filename="([^"]*)"(?:\s+language="([^"]*)")?>([\s\S]*?)(?:<\/canvas_write>|$)/);
+      if (match) {
+        const [, filename, language, body] = match;
+        const isStreaming = !part.endsWith('</canvas_write>');
+        segments.push({
+          type: 'canvas_write',
+          filename,
+          language: language || "markdown",
+          content: body,
+          isStreaming
         });
       } else {
         segments.push({
@@ -116,6 +136,27 @@ function ThoughtBlock({ content, isStreaming }: { content: string; isStreaming?:
   );
 }
 
+function CanvasWriteBadge({ filename, language, isStreaming }: { filename: string; language: string; isStreaming: boolean }) {
+  return (
+    <div className="my-3 flex items-center justify-between border border-border rounded-lg bg-muted/30 px-3 py-2 text-xs select-none">
+      <div className="flex items-center gap-2">
+        <FileCode className={cn("w-4 h-4 text-primary shrink-0", isStreaming && "animate-pulse")} strokeWidth={1.5} />
+        <span className="font-medium">
+          {isStreaming ? `Streaming ${filename}...` : `Saved ${filename} to interactive canvas`}
+        </span>
+        {isStreaming && (
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" strokeWidth={1.5} />
+        )}
+      </div>
+      {!isStreaming && (
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold border border-border px-1.5 py-0.5 rounded bg-background">
+          {language}
+        </span>
+      )}
+    </div>
+  );
+}
+
 interface MessageBubbleProps {
   message: Message;
   index: number;
@@ -141,6 +182,7 @@ export function MessageBubble({
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
+  const isEmptyAndStreaming = !isUser && message.content === "" && isStreaming;
 
   const handleCopy = async () => {
     const cleanText = message.content.replace(/<thought>[\s\S]*?<\/thought>/g, "").trim();
@@ -209,51 +251,67 @@ export function MessageBubble({
       ) : (
         /* Assistant message */
         <div className="w-full">
-          <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed break-words">
-            <div className="space-y-2">
-              {segments.map((seg, idx) => {
-                if (seg.type === 'thought') {
-                  return (
-                    <ThoughtBlock 
-                      key={idx} 
-                      content={seg.content} 
-                      isStreaming={seg.isStreaming && isStreaming} 
-                    />
-                  );
-                } else if (seg.type === 'skill') {
-                  return (
-                    <SkillResult
-                      key={idx}
-                      name={seg.skillName || ""}
-                      time={seg.skillTime}
-                      status={seg.skillStatus}
-                      content={seg.content}
-                    />
-                  );
-                } else {
-                  return (
-                    <div 
-                      key={idx} 
-                      className={cn(
-                        "overflow-x-auto break-words max-w-full", 
-                        isStreaming && idx === segments.length - 1 && "streaming-cursor"
-                      )}
-                    >
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]} 
-                        rehypePlugins={[rehypeHighlight]}
-                        components={{
-                          pre: ({ children }) => <CodeBlock>{children}</CodeBlock>
-                        }}
-                      >
-                        {seg.content}
-                      </ReactMarkdown>
-                    </div>
-                  );
-                }
-              })}
+          {isEmptyAndStreaming ? (
+            <div className="flex items-center gap-2 text-sm text-neutral-400 select-none my-1">
+              <Loader2 className="w-4 h-4 animate-spin text-neutral-500" strokeWidth={1.5} />
+              <span>Connecting to model...</span>
             </div>
-          </div>
+          ) : (
+            <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed break-words">
+              <div className="space-y-2">
+                {segments.map((seg, idx) => {
+                  if (seg.type === 'thought') {
+                    return (
+                      <ThoughtBlock 
+                        key={idx} 
+                        content={seg.content} 
+                        isStreaming={seg.isStreaming && isStreaming} 
+                      />
+                    );
+                  } else if (seg.type === 'skill') {
+                    return (
+                      <SkillResult
+                        key={idx}
+                        name={seg.skillName || ""}
+                        time={seg.skillTime}
+                        status={seg.skillStatus}
+                        content={seg.content}
+                      />
+                    );
+                  } else if (seg.type === 'canvas_write') {
+                    return (
+                      <CanvasWriteBadge
+                        key={idx}
+                        filename={seg.filename || ""}
+                        language={seg.language || "text"}
+                        isStreaming={!!seg.isStreaming && isStreaming}
+                      />
+                    );
+                  } else {
+                    return (
+                      <div 
+                        key={idx} 
+                        className={cn(
+                          "overflow-x-auto break-words max-w-full", 
+                          isStreaming && idx === segments.length - 1 && "streaming-cursor"
+                        )}
+                      >
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]} 
+                          rehypePlugins={[rehypeHighlight]}
+                          components={{
+                            pre: ({ children }) => <CodeBlock>{children}</CodeBlock>
+                          }}
+                        >
+                          {seg.content}
+                        </ReactMarkdown>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Action bar */}
           {!isStreaming && (

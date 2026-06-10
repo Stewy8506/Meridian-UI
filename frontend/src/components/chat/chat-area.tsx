@@ -48,7 +48,9 @@ export function ChatArea() {
     canvasOpen,
     setCanvasOpen,
     drafts,
-    setDraft
+    setDraft,
+    isStreaming,
+    setIsStreaming
   } = useAppStore();
   
   const input = (activeChatId && drafts[activeChatId]) || "";
@@ -60,7 +62,6 @@ export function ChatArea() {
     }
   };
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -322,36 +323,69 @@ export function ChatArea() {
           });
           
           let currentEvent = "";
+          let buffer = "";
+          let dataLines: string[] = [];
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split("\n");
+            buffer += decoder.decode(value, { stream: true });
+            let lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || "";
             
             for (const line of lines) {
               const trimmed = line.trim();
-              if (trimmed.startsWith("event: ")) {
-                currentEvent = trimmed.slice(7).trim();
-              } else if (trimmed.startsWith("data: ")) {
-                const dataStr = trimmed.slice(6);
-                if (dataStr === "[DONE]") break;
-                
-                if (currentEvent === "error") {
-                  throw new Error(dataStr);
+              if (trimmed === "") {
+                if (dataLines.length > 0) {
+                  const messageData = dataLines.join("\n");
+                  dataLines = [];
+                  
+                  if (messageData === "[DONE]") {
+                    break;
+                  }
+                  
+                  if (currentEvent === "error") {
+                    throw new Error(messageData);
+                  }
+                  
+                  assistantText += messageData;
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    const lastIndex = newMessages.length - 1;
+                    newMessages[lastIndex] = {
+                      ...newMessages[lastIndex],
+                      content: newMessages[lastIndex].content + messageData
+                    };
+                    return newMessages;
+                  });
                 }
-                
-                assistantText += dataStr;
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  const lastIndex = newMessages.length - 1;
-                  newMessages[lastIndex] = {
-                    ...newMessages[lastIndex],
-                    content: newMessages[lastIndex].content + dataStr
-                  };
-                  return newMessages;
-                });
+              } else if (trimmed.startsWith("event: ")) {
+                currentEvent = trimmed.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
+                dataLines.push(line.slice(6));
+              } else if (trimmed === "data:") {
+                dataLines.push("");
               }
+            }
+          }
+
+          if (dataLines.length > 0) {
+            const messageData = dataLines.join("\n");
+            if (messageData !== "[DONE]") {
+              if (currentEvent === "error") {
+                throw new Error(messageData);
+              }
+              assistantText += messageData;
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastIndex = newMessages.length - 1;
+                newMessages[lastIndex] = {
+                  ...newMessages[lastIndex],
+                  content: newMessages[lastIndex].content + messageData
+                };
+                return newMessages;
+              });
             }
           }
           

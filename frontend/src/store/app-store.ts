@@ -91,6 +91,10 @@ interface AppState {
   setCanvasOpen: (open: boolean) => void;
   setActiveCanvasFileId: (id: string | null) => void;
 
+  // Streaming State
+  isStreaming: boolean;
+  setIsStreaming: (isStreaming: boolean) => void;
+
   setProvider: (provider: string) => void;
   setModel: (model: string) => void;
   toggleSidebar: () => void;
@@ -202,6 +206,10 @@ export const useAppStore = create<AppState>()(
       activeCanvasFileId: null,
       setCanvasOpen: (open) => set({ canvasOpen: open }),
       setActiveCanvasFileId: (id) => set({ activeCanvasFileId: id }),
+
+      // Streaming state defaults
+      isStreaming: false,
+      setIsStreaming: (isStreaming) => set({ isStreaming }),
 
       setProvider: (provider) => set({ provider }),
       setModel: (model) => set({ model }),

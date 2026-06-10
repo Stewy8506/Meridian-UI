@@ -2,6 +2,159 @@ import json
 import httpx
 from typing import AsyncGenerator, List, Dict, Any
 from app.providers.base import BaseProvider
+def extract_partial_fields(json_str: str) -> dict:
+    idx = 0
+    n = len(json_str)
+    
+    # Skip whitespace and '{'
+    while idx < n and json_str[idx].isspace():
+        idx += 1
+    if idx < n and json_str[idx] == '{':
+        idx += 1
+        
+    results = {}
+    
+    def parse_string():
+        nonlocal idx
+        # Expects '"' at current position
+        if idx >= n or json_str[idx] != '"':
+            return None, False
+        idx += 1 # Consume open quote
+        res = []
+        is_complete = False
+        while idx < n:
+            c = json_str[idx]
+            if c == '"':
+                idx += 1
+                is_complete = True
+                break
+            elif c == '\\':
+                if idx + 1 < n:
+                    next_c = json_str[idx + 1]
+                    if next_c == '"':
+                        res.append('"')
+                    elif next_c == '\\':
+                        res.append('\\')
+                    elif next_c == '/':
+                        res.append('/')
+                    elif next_c == 'n':
+                        res.append('\n')
+                    elif next_c == 'r':
+                        res.append('\r')
+                    elif next_c == 't':
+                        res.append('\t')
+                    elif next_c == 'b':
+                        res.append('\b')
+                    elif next_c == 'f':
+                        res.append('\f')
+                    elif next_c == 'u':
+                        # Handle unicode escape \uXXXX
+                        if idx + 5 < n:
+                            hex_code = json_str[idx+2:idx+6]
+                            try:
+                                res.append(chr(int(hex_code, 16)))
+                            except ValueError:
+                                res.append('\\u' + hex_code)
+                            idx += 4
+                        else:
+                            # Incomplete unicode escape
+                            res.append(json_str[idx:n])
+                            idx = n
+                            break
+                    else:
+                        res.append('\\' + next_c)
+                    idx += 2
+                else:
+                    # Incomplete escape at the end
+                    res.append('\\')
+                    idx += 1
+            else:
+                res.append(c)
+                idx += 1
+        return "".join(res), is_complete
+
+    def skip_value():
+        nonlocal idx
+        # Skip whitespaces
+        while idx < n and json_str[idx].isspace():
+            idx += 1
+        if idx >= n:
+            return
+        c = json_str[idx]
+        if c == '"':
+            # Skip string
+            parse_string()
+        elif c in '{[':
+            # Skip nested structure by balancing braces/brackets
+            opener = c
+            closer = '}' if c == '{' else ']'
+            depth = 0
+            in_str = False
+            while idx < n:
+                ch = json_str[idx]
+                if in_str:
+                    if ch == '"':
+                        in_str = False
+                    elif ch == '\\':
+                        idx += 1
+                else:
+                    if ch == '"':
+                        in_str = True
+                    elif ch == opener:
+                        depth += 1
+                    elif ch == closer:
+                        depth -= 1
+                        if depth == 0:
+                            idx += 1
+                            break
+                idx += 1
+        else:
+            # Skip primitive value (number, true, false, null)
+            while idx < n and json_str[idx] not in ',}':
+                idx += 1
+
+    while idx < n:
+        # Skip whitespace
+        while idx < n and json_str[idx].isspace():
+            idx += 1
+        if idx >= n or json_str[idx] == '}':
+            break
+            
+        # Parse key (must be string)
+        if json_str[idx] != '"':
+            idx += 1
+            continue
+            
+        key, key_complete = parse_string()
+        if not key_complete or key is None:
+            break
+            
+        # Skip whitespace, colon, whitespace
+        while idx < n and json_str[idx].isspace():
+            idx += 1
+        if idx < n and json_str[idx] == ':':
+            idx += 1
+        else:
+            break
+        while idx < n and json_str[idx].isspace():
+            idx += 1
+            
+        if idx >= n:
+            break
+            
+        if json_str[idx] == '"':
+            val, val_complete = parse_string()
+            results[key] = val
+        else:
+            skip_value()
+            
+        # Skip whitespace and comma
+        while idx < n and json_str[idx].isspace():
+            idx += 1
+        if idx < n and json_str[idx] == ',':
+            idx += 1
+            
+    return results
 
 class OpenAICompatibleProvider(BaseProvider):
     """
@@ -159,6 +312,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 
             tool_calls_map = {}
             is_tool_call = False
+            canvas_states = {} # tool_idx -> {"started": bool, "last_len": int}
             
             try:
                 async with client.stream(
@@ -196,6 +350,42 @@ class OpenAICompatibleProvider(BaseProvider):
                                                 tool_calls_map[tool_idx]["function"]["name"] += f["name"]
                                             if "arguments" in f:
                                                 tool_calls_map[tool_idx]["function"]["arguments"] += f["arguments"]
+
+                                        # Handle real-time canvas stream translation
+                                        tc_info = tool_calls_map[tool_idx]
+                                        if tc_info["function"]["name"] == "canvas_write":
+                                            if tool_idx not in canvas_states:
+                                                canvas_states[tool_idx] = {"started": False, "last_len": 0}
+                                            
+                                            state = canvas_states[tool_idx]
+                                            args_str = tc_info["function"]["arguments"]
+                                            parsed = extract_partial_fields(args_str)
+                                            filename = parsed.get("filename", "")
+                                            content = parsed.get("content", "")
+                                            
+                                            language = parsed.get("language", "")
+                                            if not language and filename:
+                                                ext = filename.split(".")[-1].lower() if "." in filename else ""
+                                                lang_map = {
+                                                    "html": "html", "js": "javascript", "ts": "typescript",
+                                                    "tsx": "typescript", "jsx": "javascript", "css": "css",
+                                                    "py": "python", "json": "json", "md": "markdown",
+                                                    "mermaid": "mermaid"
+                                                }
+                                                language = lang_map.get(ext, "markdown")
+                                            elif not language:
+                                                language = "markdown"
+                                                
+                                            if filename and not state["started"]:
+                                                state["started"] = True
+                                                yield f'<canvas_write filename="{filename}" language="{language}">'
+                                            
+                                            if state["started"] and content:
+                                                curr_len = len(content)
+                                                delta_content = content[state["last_len"]:curr_len]
+                                                if delta_content:
+                                                    yield delta_content
+                                                    state["last_len"] = curr_len
                                 
                                 # If not a tool call, yield content if any
                                 if not is_tool_call:
@@ -204,6 +394,11 @@ class OpenAICompatibleProvider(BaseProvider):
                                         yield content
                             except json.JSONDecodeError:
                                 continue
+                    
+                    # Close any open canvas_write tags
+                    for tool_idx, state in canvas_states.items():
+                        if state["started"]:
+                            yield "</canvas_write>"
             except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
                 if not is_fallback_attempt and ("generativelanguage.googleapis.com" in self.base_url or "gemini" in clean_model):
                     fallback_model = "gemini-2.5-flash"
