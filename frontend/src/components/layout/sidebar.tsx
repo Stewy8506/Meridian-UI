@@ -259,7 +259,7 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className="px-4 py-4 flex items-center justify-between shrink-0 select-none">
-          <h2 className="font-semibold text-sm tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-foreground/75">Meridian AI</h2>
+          <h2 className="font-semibold text-sm tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-foreground/75">Meridian UI</h2>
           <button
             onClick={toggleSidebar}
             className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground rounded-md transition-colors"

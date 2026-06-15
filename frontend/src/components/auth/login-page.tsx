@@ -47,7 +47,7 @@ export function LoginPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Meridian AI
+            Meridian UI
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
             {isSignUp ? "Create your account" : "Sign in to continue"}

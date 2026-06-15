@@ -1,4 +1,4 @@
-# Meridian AI → Remaining Roadmap
+# Meridian UI → Remaining Roadmap
 
 > **Goal**: Complete the self-hosted AI operating environment with production infrastructure, deployment configs, exports, and performance tuning.
 
