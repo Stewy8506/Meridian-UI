@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License" />
   
-  <h1>🌌 AI Workspace</h1>
+  <h1>🌌 Meridian AI</h1>
   <p><b>A self-hosted, full-stack AI operating environment designed for power users.</b></p>
   
   <p>
@@ -17,9 +17,9 @@
 
 ---
 
-## ⚡ Why AI Workspace?
+## ⚡ Why Meridian AI?
 
-AI Workspace is built for developers, researchers, and power users who demand **absolute control** over their AI infrastructure. Instead of locking into a single ecosystem, this platform acts as an unopinionated orchestrator. It allows you to switch between OpenAI, Anthropic, local models, and dozens of cloud inference providers on the fly, while deeply integrating your local files, analytics, and custom code execution.
+Meridian AI is built for developers, researchers, and power users who demand **absolute control** over their AI infrastructure. Instead of locking into a single ecosystem, this platform acts as an unopinionated orchestrator. It allows you to switch between OpenAI, Anthropic, local models, and dozens of cloud inference providers on the fly, while deeply integrating your local files, analytics, and custom code execution.
 
 ---
 
@@ -101,7 +101,7 @@ Security and state management you can trust.
 ## 🏗️ Architecture
 
 ```text
-AI Workspace/
+Meridian AI/
 ├── backend/                  # High-performance FastAPI ASGI service
 │   └── app/
 │       ├── api/              # Route handlers (auth, chat, keys, skills, conversations, docs, analytics, canvas, workflows, arena, prompts, personas)
@@ -180,5 +180,5 @@ Start both the frontend and backend simultaneously using the root launcher:
 
 ---
 <div align="center">
-  <i>A modular, self-hosted console for universal model orchestrations and structured AI workspace apps.</i>
+  <i>A modular, self-hosted console for universal model orchestrations and structured Meridian AI apps.</i>
 </div>

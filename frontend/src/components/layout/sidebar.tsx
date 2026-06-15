@@ -2,9 +2,9 @@
 
 import { useAppStore, ChatSession, ChatFolder } from "@/store/app-store";
 import { cn } from "@/lib/utils";
-import { 
-  Plus, Trash2, Pin, Search, 
-  ChevronDown, ChevronRight, MoreVertical, X, FolderMinus, 
+import {
+  Plus, Trash2, Pin, Search,
+  ChevronDown, ChevronRight, MoreVertical, X, FolderMinus,
   Settings, LogOut, FolderPlus, Folder, Swords, Workflow, BarChart2, MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,13 +15,13 @@ import { toast } from "@/components/ui/toast";
 import { useAuthStore } from "@/store/auth-store";
 
 export function Sidebar() {
-  const { 
-    sidebarOpen, 
-    toggleSidebar, 
-    chats, 
-    activeChatId, 
-    setActiveChatId, 
-    createChat, 
+  const {
+    sidebarOpen,
+    toggleSidebar,
+    chats,
+    activeChatId,
+    setActiveChatId,
+    createChat,
     deleteChat,
     pinnedChats,
     togglePinChat,
@@ -52,7 +52,7 @@ export function Sidebar() {
     return <div className="w-[272px] h-full bg-card border-r border-border shrink-0" />;
   }
 
-  const filteredChats = chats.filter(chat => 
+  const filteredChats = chats.filter(chat =>
     chat.messages.length > 0 &&
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -109,17 +109,17 @@ export function Sidebar() {
     const menuOpen = activeMenuChatId === chat.id;
     const pinned = isPinned(chat.id);
 
-    const lastMessage = chat.messages && chat.messages.length > 0 
-      ? chat.messages[chat.messages.length - 1] 
+    const lastMessage = chat.messages && chat.messages.length > 0
+      ? chat.messages[chat.messages.length - 1]
       : null;
-      
-    const previewText = lastMessage 
+
+    const previewText = lastMessage
       ? lastMessage.content
-          .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/gi, "")
-          .replace(/<skill_result[\s\S]*?(?:<\/skill_result>|$)/gi, "")
-          .replace(/<canvas_write[\s\S]*?(?:<\/canvas_write>|$)/gi, "")
-          .replace(/<\/?[a-zA-Z_]+[^>]*>/gi, "")
-          .trim()
+        .replace(/<thought>[\s\S]*?(?:<\/thought>|$)/gi, "")
+        .replace(/<skill_result[\s\S]*?(?:<\/skill_result>|$)/gi, "")
+        .replace(/<canvas_write[\s\S]*?(?:<\/canvas_write>|$)/gi, "")
+        .replace(/<\/?[a-zA-Z_]+[^>]*>/gi, "")
+        .trim()
       : "";
 
     return (
@@ -147,7 +147,7 @@ export function Sidebar() {
             </span>
           )}
         </div>
-        
+
         {/* Hover actions */}
         <div className="absolute right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
@@ -164,7 +164,7 @@ export function Sidebar() {
           >
             <Pin className="w-3 h-3" strokeWidth={1.5} />
           </button>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -181,12 +181,12 @@ export function Sidebar() {
         <AnimatePresence>
           {menuOpen && (
             <>
-              <div 
-                className="fixed inset-0 z-30" 
+              <div
+                className="fixed inset-0 z-30"
                 onClick={(e) => {
                   e.stopPropagation();
                   setActiveMenuChatId(null);
-                }} 
+                }}
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.96, y: 4 }}
@@ -218,9 +218,9 @@ export function Sidebar() {
                     </button>
                   );
                 })}
-                
+
                 <div className="h-px bg-border my-1" />
-                
+
                 <button
                   onClick={() => {
                     deleteChat(chat.id);
@@ -259,9 +259,9 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className="px-4 py-4 flex items-center justify-between shrink-0 select-none">
-          <h2 className="font-semibold text-sm tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-foreground/75">Orbit Workspace</h2>
-          <button 
-            onClick={toggleSidebar} 
+          <h2 className="font-semibold text-sm tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-foreground/75">Meridian AI</h2>
+          <button
+            onClick={toggleSidebar}
             className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground rounded-md transition-colors"
           >
             <X className="w-4 h-4" strokeWidth={1.5} />
@@ -304,10 +304,10 @@ export function Sidebar() {
 
         {/* New Chat + Search */}
         <div className="px-3 pb-3 space-y-2 shrink-0">
-          <button 
-            onClick={() => { 
-              setView('chat'); 
-              createChat(); 
+          <button
+            onClick={() => {
+              setView('chat');
+              createChat();
               if (typeof window !== "undefined" && window.location.pathname !== "/") {
                 window.location.href = "/";
               }
@@ -328,7 +328,7 @@ export function Sidebar() {
               className="w-full pl-8 pr-3 py-1.5 bg-transparent border-b border-border text-xs outline-none focus:border-foreground/30 transition-colors placeholder:text-muted-foreground/50"
             />
             {searchQuery && (
-              <button 
+              <button
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2 p-0.5 hover:bg-accent rounded"
               >
@@ -340,11 +340,11 @@ export function Sidebar() {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-3 select-none">
-          
+
           {/* Workspace Apps */}
           <div className="space-y-0.5">
             <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em] px-3 py-1.5">Apps</div>
-            
+
             <a
               href="/"
               onClick={(e) => {
@@ -410,7 +410,7 @@ export function Sidebar() {
           <div className="space-y-0.5">
             <div className="flex items-center justify-between px-3 py-1">
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Folders</span>
-              <button 
+              <button
                 onClick={() => setShowNewFolderInput(!showNewFolderInput)}
                 className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
                 title="New folder"
@@ -421,7 +421,7 @@ export function Sidebar() {
 
             <AnimatePresence>
               {showNewFolderInput && (
-                <motion.form 
+                <motion.form
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -436,8 +436,8 @@ export function Sidebar() {
                     onChange={(e) => setNewFolderName(e.target.value)}
                     className="flex-1 bg-transparent border-b border-border text-xs outline-none text-foreground py-0.5 focus:border-foreground/30"
                   />
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="px-2 py-0.5 bg-foreground text-background hover:bg-foreground/90 rounded text-[10px] font-medium transition-colors"
                   >
                     Create
@@ -453,7 +453,7 @@ export function Sidebar() {
 
                 return (
                   <div key={folder.id}>
-                    <div 
+                    <div
                       onClick={() => toggleFolder(folder.id)}
                       className="flex items-center justify-between px-3 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer text-xs text-foreground/80 rounded-md"
                     >
@@ -462,7 +462,7 @@ export function Sidebar() {
                         <span className="truncate font-medium">{folder.name}</span>
                         <span className="text-[10px] text-muted-foreground">{folderChats.length}</span>
                       </div>
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -558,11 +558,11 @@ export function Sidebar() {
                 <span className="text-[10px] text-muted-foreground leading-none truncate">{user?.email || "guest@local"}</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
               {isAuthEnabled && (
-                <button 
-                  onClick={logout} 
+                <button
+                  onClick={logout}
                   className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
                   title="Sign out"
                 >
@@ -573,8 +573,8 @@ export function Sidebar() {
             </div>
           </div>
 
-          <button 
-            onClick={() => setSettingsOpen(true)} 
+          <button
+            onClick={() => setSettingsOpen(true)}
             className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-left font-medium cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />

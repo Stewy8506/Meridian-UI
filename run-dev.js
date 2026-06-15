@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 console.log('\x1b[35m%s\x1b[0m', '==============================================');
-console.log('\x1b[36m%s\x1b[0m', ' 🚀  Starting AI Chat Workspace Dev Environment');
+console.log('\x1b[36m%s\x1b[0m', ' 🚀  Starting Meridian AI Workspace Dev Environment');
 console.log('\x1b[35m%s\x1b[0m', '==============================================\n');
 
 const backendDir = path.join(__dirname, 'backend');

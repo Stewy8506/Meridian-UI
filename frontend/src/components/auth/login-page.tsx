@@ -38,7 +38,7 @@ export function LoginPage() {
       {/* Premium Noise Overlay */}
       <div className="absolute inset-0 noise-overlay" />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -47,7 +47,7 @@ export function LoginPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            AI Workspace
+            Meridian AI
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
             {isSignUp ? "Create your account" : "Sign in to continue"}
@@ -68,11 +68,11 @@ export function LoginPage() {
                 >
                   <label className="text-xs font-medium text-muted-foreground">Username</label>
                   <input
-                     type="text"
-                     placeholder="username"
-                     value={username}
-                     onChange={(e) => setUsername(e.target.value)}
-                     className="w-full bg-card border border-border focus:border-foreground/20 rounded-lg py-2.5 px-3 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors"
+                    type="text"
+                    placeholder="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full bg-card border border-border focus:border-foreground/20 rounded-lg py-2.5 px-3 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors"
                   />
                 </motion.div>
               )}

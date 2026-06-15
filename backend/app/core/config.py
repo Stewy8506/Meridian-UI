@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AI Workspace API"
+    PROJECT_NAME: str = "Meridian AI API"
     VERSION: str = "1.0.0"
     
     # Provider API Keys
