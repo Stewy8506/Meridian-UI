@@ -126,7 +126,13 @@ class VectorStoreManager:
         self.fallback_db = fallback_db
         self.client = None
         self.use_fallback = False
+        self._initialized = False
+
+    def initialize(self):
+        if self._initialized:
+            return
         self._init_backend()
+        self._initialized = True
 
     def _init_backend(self):
         try:
@@ -156,6 +162,10 @@ class VectorStoreManager:
         ids: List[str], 
         embeddings: List[List[float]]
     ):
+        if self.client is None:
+            self.initialize()
+        assert self.client is not None
+        
         if self.use_fallback:
             self.client.add_documents(collection_name, texts, metadatas, ids, embeddings)
             return
@@ -182,6 +192,10 @@ class VectorStoreManager:
         query_embedding: List[float], 
         n_results: int = 5
     ) -> List[Dict[str, Any]]:
+        if self.client is None:
+            self.initialize()
+        assert self.client is not None
+        
         if self.use_fallback:
             return self.client.query(collection_name, query_embedding, n_results)
 
@@ -214,6 +228,10 @@ class VectorStoreManager:
             return fallback_store.query(collection_name, query_embedding, n_results)
 
     def delete_documents(self, collection_name: str, ids: List[str]):
+        if self.client is None:
+            self.initialize()
+        assert self.client is not None
+        
         if self.use_fallback:
             self.client.delete_documents(collection_name, ids)
             return
@@ -225,6 +243,10 @@ class VectorStoreManager:
             logger.error(f"ChromaDB delete failed: {e}")
 
     def delete_collection(self, collection_name: str):
+        if self.client is None:
+            self.initialize()
+        assert self.client is not None
+        
         if self.use_fallback:
             self.client.delete_collection(collection_name)
             return

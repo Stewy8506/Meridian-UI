@@ -3,27 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes import chat, skills, auth, api_keys, conversations, documents, knowledge, files, images, execute, analytics, settings as settings_route, arena, personas, workflows, canvas, prompts
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-)
+from contextlib import asynccontextmanager
 
-# Allow CORS for the Next.js frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     # Dynamically import models to register them on Base metadata
     from app.database.models.conversation import Base
     from app.database.models.user import User, UserApiKey, Memory
@@ -49,6 +32,40 @@ def on_startup():
     # Run skill auto-discovery
     from app.skills.registry import skill_registry
     skill_registry.discover()
+    
+    # Pre-load heavy ML models and Vector DBs eagerly
+    from app.rag.embeddings import embedding_generator
+    from app.rag.vector_store import vector_store
+    
+    import logging
+    logger = logging.getLogger("app.main")
+    logger.info("Pre-loading machine learning models and vector databases...")
+    embedding_generator.initialize()
+    vector_store.initialize()
+    logger.info("Eager initialization complete.")
+    
+    yield
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    lifespan=lifespan
+)
+
+# Allow CORS for the Next.js frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(skills.router, prefix="/api/skills", tags=["skills"])

@@ -14,6 +14,7 @@ class KnowledgeBase(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     documents = relationship("Document", back_populates="knowledge_base", cascade="all, delete-orphan")
+    notes = relationship("CanvasDocument", back_populates="knowledge_base", cascade="all, delete-orphan")
     user = relationship("User", back_populates="knowledge_bases")
 
 class Document(Base):

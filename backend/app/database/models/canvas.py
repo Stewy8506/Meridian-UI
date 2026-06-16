@@ -10,6 +10,7 @@ class CanvasDocument(Base):
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"), index=True)
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=True, index=True)
+    knowledge_base_id = Column(String, ForeignKey("knowledge_bases.id"), nullable=True, index=True)
     filename = Column(String, index=True)
     content = Column(Text)
     language = Column(String, default="markdown")
@@ -17,6 +18,7 @@ class CanvasDocument(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     versions = relationship("CanvasVersion", back_populates="document", cascade="all, delete-orphan")
+    knowledge_base = relationship("KnowledgeBase", back_populates="notes")
 
 class CanvasVersion(Base):
     __tablename__ = "canvas_versions"

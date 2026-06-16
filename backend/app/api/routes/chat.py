@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 import time
 from app.core.pricing import calculate_token_cost
 from app.database.models.usage import UsageRecord
+from app.rag.retriever import Retriever
 
 router = APIRouter()
 
@@ -76,7 +77,6 @@ async def chat_completions(
                     break
             
             if query:
-                from app.rag.retriever import Retriever
                 collection_names = [f"kb_{kb_id}" for kb_id in verified_kb_ids]
                 
                 # Fetch relevant chunks (run synchronous CPU bound work inside to_thread if needed,

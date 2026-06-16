@@ -16,6 +16,7 @@ class CanvasSaveRequest(BaseModel):
     content: str
     language: Optional[str] = "markdown"
     conversation_id: Optional[str] = None
+    knowledge_base_id: Optional[str] = None
 
 @router.get("")
 async def get_canvas_documents(
@@ -100,11 +101,17 @@ async def save_canvas_document(
     if not filename:
         raise HTTPException(status_code=400, detail="Filename is required.")
         
-    doc = db.query(CanvasDocument).filter(
+    doc_query = db.query(CanvasDocument).filter(
         CanvasDocument.user_id == str(current_user.id),
-        CanvasDocument.filename == filename,
-        CanvasDocument.conversation_id == payload.conversation_id
-    ).first()
+        CanvasDocument.filename == filename
+    )
+    
+    if payload.conversation_id:
+        doc_query = doc_query.filter(CanvasDocument.conversation_id == payload.conversation_id)
+    if payload.knowledge_base_id:
+        doc_query = doc_query.filter(CanvasDocument.knowledge_base_id == payload.knowledge_base_id)
+        
+    doc = doc_query.first()
     
     if doc:
         doc.content = payload.content
@@ -117,7 +124,8 @@ async def save_canvas_document(
             content=payload.content,
             language=payload.language or "markdown",
             version=1,
-            conversation_id=payload.conversation_id
+            conversation_id=payload.conversation_id,
+            knowledge_base_id=payload.knowledge_base_id
         )
         db.add(doc)
         

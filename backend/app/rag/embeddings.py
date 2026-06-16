@@ -12,7 +12,13 @@ class EmbeddingGenerator:
     """
     def __init__(self):
         self.local_model = None
+        self._initialized = False
+
+    def initialize(self):
+        if self._initialized:
+            return
         self._init_local_model()
+        self._initialized = True
 
     def _init_local_model(self):
         try:

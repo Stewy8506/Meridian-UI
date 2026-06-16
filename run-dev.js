@@ -23,12 +23,50 @@ const backend = spawn(uvicornPath, ['app.main:app', '--reload', '--port', '8000'
   cwd: backendDir,
 });
 
+let backendReady = false;
+let frontendReady = false;
+let artPrinted = false;
+
+const asciiArt = `
+   ,-,--.                _,.----.    _,.----.      ,----.    ,-,--.    ,-,--.  
+ ,-.'-  _\\ .--.-. .-.-..' .' -   \\ .' .' -   \\  ,-.--\` , \\ ,-.'-  _\\ ,-.'-  _\\ 
+/==/_ ,_.'.==/ -|/=/  /==/  ,  ,-'/==/  ,  ,-' |==|-  _.-.==/_ ,_.'.==/_ ,_.' 
+\\==\\  \\   |==| ,||=| -|==|-   |  .|==|-   |  . |==|   \`.-.\\==\\  \\   \\==\\  \\    
+ \\==\\ -\\  |==|- | =/  |==|_   \`-' \\==|_   \`-' Y==/_ ,    / \\==\\ -\\   \\==\\ -\\   
+ _\\==\\ ,\\ |==|,  \\/ - |==|   _  , |==|   _  , |==|    .-'  _\\==\\ ,\\  _\\==\\ ,\\  
+/==/\\/ _ ||==|-   ,   |==\\.       |==\\.       /==|_  ,\`-._/==/\\/ _ |/==/\\/ _ | 
+\\==\\ - , //==/ , _  .' \`-.\\.___.-' \`-.\\.___.-'/==/ ,     /\\==\\ - , /\\==\\ - , / 
+ \`--\`---' \`--\`..---'                          \`--\`-----\`\`  \`--\`---'  \`--\`---'  
+`;
+
+function checkReady() {
+  if (backendReady && frontendReady && !artPrinted) {
+    artPrinted = true;
+    console.log('\x1b[35m%s\x1b[0m', asciiArt);
+    console.log('\x1b[32m%s\x1b[0m', '✨ Development servers are fully up and running!');
+  }
+}
+
+
 // Helper to format output
 const logData = (prefix, color, data) => {
   const lines = data.toString().trim().split('\n');
   lines.forEach(line => {
     if (line) {
       console.log(`${color}${prefix}\x1b[0m ${line}`);
+      
+      // Check ready states
+      if (prefix === '[Backend]' && line.includes('Application startup complete.')) {
+        if (!backendReady) {
+          backendReady = true;
+          startFrontend();
+        }
+        checkReady();
+      }
+      if (prefix === '[Frontend]' && (line.includes('Ready in') || line.includes('ready - started server') || line.includes('compiled client and server'))) {
+        frontendReady = true;
+        checkReady();
+      }
     }
   });
 };
@@ -42,20 +80,26 @@ backend.on('close', (code) => {
 });
 
 // 2. Spawning Frontend (Next.js)
-console.log('\x1b[34m%s\x1b[0m', '🎨 [System] Starting Next.js Frontend on port 5000...');
-const frontend = spawn('npm', ['run', 'dev'], {
-  cwd: frontendDir,
-  shell: true,
-  env: { ...process.env, PORT: '5000' }
-});
+let frontend;
 
-frontend.stdout.on('data', (data) => logData('[Frontend]', '\x1b[36m', data)); // Cyan
-frontend.stderr.on('data', (data) => logData('[Frontend ERROR]', '\x1b[31m', data)); // Red
+function startFrontend() {
+  if (frontend) return;
+  
+  console.log('\x1b[34m%s\x1b[0m', '🎨 [System] Starting Next.js Frontend on port 5000...');
+  frontend = spawn('npm', ['run', 'dev'], {
+    cwd: frontendDir,
+    shell: true,
+    env: { ...process.env, PORT: '5000' }
+  });
 
-frontend.on('close', (code) => {
-  console.log('\x1b[31m%s\x1b[0m', `🛑 [System] Frontend process exited with code ${code}`);
-  cleanupAndExit();
-});
+  frontend.stdout.on('data', (data) => logData('[Frontend]', '\x1b[36m', data)); // Cyan
+  frontend.stderr.on('data', (data) => logData('[Frontend ERROR]', '\x1b[31m', data)); // Red
+
+  frontend.on('close', (code) => {
+    console.log('\x1b[31m%s\x1b[0m', `🛑 [System] Frontend process exited with code ${code}`);
+    cleanupAndExit();
+  });
+}
 
 // Cleanup handler
 let isCleaningUp = false;
@@ -69,7 +113,7 @@ function cleanupAndExit() {
   } catch (e) { }
 
   try {
-    frontend.kill();
+    if (frontend) frontend.kill();
   } catch (e) { }
 
   setTimeout(() => {

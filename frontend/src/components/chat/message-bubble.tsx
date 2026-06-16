@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Message } from "@/store/app-store";
 import { 
   Copy, Check, Edit2, RotateCcw, 
-  ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, Loader2, Brain, FileCode 
+  ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, Loader2, Brain, FileCode, Bookmark
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -166,6 +166,7 @@ interface MessageBubbleProps {
   onEdit: (index: number, newContent: string) => void;
   onRegenerate: (index: number) => void;
   onReaction: (index: number, reaction: 'like' | 'dislike' | null) => void;
+  onSaveNote?: (content: string) => void;
 }
 
 export function MessageBubble({
@@ -176,7 +177,8 @@ export function MessageBubble({
   isStreaming,
   onEdit,
   onRegenerate,
-  onReaction
+  onReaction,
+  onSaveNote
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
@@ -306,10 +308,23 @@ export function MessageBubble({
                           remarkPlugins={[remarkGfm]} 
                           rehypePlugins={[rehypeHighlight]}
                           components={{
-                            pre: ({ children }) => <CodeBlock>{children}</CodeBlock>
+                            pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+                            a: ({ href, children }) => {
+                              if (href?.startsWith('#citation-')) {
+                                return (
+                                  <span 
+                                    className="inline-flex items-center justify-center bg-muted/80 hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-[10px] px-1 py-0.5 min-w-[1.25rem] rounded-md mx-0.5 cursor-help transition-colors select-none font-medium"
+                                    title={`Source Reference ${href.replace('#citation-', '')}`}
+                                  >
+                                    {children}
+                                  </span>
+                                );
+                              }
+                              return <a href={href} target="_blank" rel="noopener noreferrer" className="text-foreground underline decoration-border hover:decoration-foreground underline-offset-2 transition-colors">{children}</a>;
+                            }
                           }}
                         >
-                          {seg.content}
+                          {seg.content.replace(/\[(?:Source\s+)?(\d+)(?::[^\]]*)?\]/gi, '[$1](#citation-$1)')}
                         </ReactMarkdown>
                       </div>
                     );
@@ -337,6 +352,16 @@ export function MessageBubble({
               >
                 <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
+
+              {onSaveNote && (
+                <button
+                  onClick={() => onSaveNote(message.content.replace(/<thought>[\s\S]*?<\/thought>/g, "").trim())}
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                  title="Save to Notes"
+                >
+                  <Bookmark className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              )}
 
               <TTSPlayer text={message.content.replace(/<thought>[\s\S]*?<\/thought>/g, "").replace(/<skill_result[\s\S]*?<\/skill_result>/g, "").trim()} />
 

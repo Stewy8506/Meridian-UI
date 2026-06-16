@@ -64,16 +64,16 @@ class Retriever:
             "CONTEXT FROM ATTACHED DOCUMENTS & KNOWLEDGE SOURCES:",
             "Use the following excerpts to answer the prompt.",
             "Always prefer information below over general pre-trained knowledge.",
-            "Cite document names when providing answers.",
+            "CRITICAL: You MUST cite your sources using inline brackets with the exact Source ID, like [1] or [2], whenever you reference information from the excerpts below.",
             "================================================================="
         ]
 
         for idx, result in enumerate(results):
             source = result["metadata"].get("filename", f"source_{idx}")
-            chunk_idx = result["metadata"].get("chunk_index", idx)
+            source_id = idx + 1
             text = result["text"]
             
-            context_lines.append(f"\n[Source Document: {source} (Excerpt #{chunk_idx})]")
+            context_lines.append(f"\n[Source {source_id}: {source}]")
             context_lines.append("-----------------------------------------------------------------")
             context_lines.append(text)
             context_lines.append("-----------------------------------------------------------------")

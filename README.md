@@ -36,11 +36,14 @@ Equip your AI with real-time capabilities. A two-stage intent router uses keywor
 - **Built-in Arsenal:** Web search (Tavily/Exa), Wikipedia summaries, ArXiv academic search, local vector memory recall/storage, date/time utilities, mathematical expression calculator, secure random UUID generator, and JSON formatting transformations.
 - **Marketplace UI:** Browse, toggle, and live-test your tools right from the dashboard.
 
-### 📚 RAG & Knowledge Collections
-Your personal, privacy-first knowledge base.
+### 📚 RAG & Knowledge Notebooks
+Your personal, privacy-first knowledge base, fully integrated with your workspace notes and canvas.
 - **Format Agnostic:** Upload PDFs, Word documents, Markdown, CSVs, or JSON.
 - **Smart Chunking:** Documents are processed with sentence-aligned overlap to preserve semantic context.
-- **Vector Search:** Embedded locally using `all-MiniLM-L6-v2` (with OpenAI/Gemini fallbacks) and stored in a lightweight SQLite/ChromaDB hybrid backend. Pick and choose which collections to augment on a per-conversation basis.
+- **Vector Search:** Embedded locally using `all-MiniLM-L6-v2` (with OpenAI/Gemini fallbacks) and stored in a lightweight SQLite/ChromaDB hybrid backend. Pick and choose which notebooks to augment on a per-conversation basis.
+- **Notebook Actions (AI Study Prep):** Instantly generate study materials including **FAQs**, **Study Guides**, and **Chronological Timelines** using deep RAG retrieval (up to 20 text chunks) processed by a selected LLM provider.
+- **Custom Notes Hub:** Organizes workspace notes alongside your files. Generated study materials or chat clippings are saved as markdown documents linked to the notebook.
+- **Interactive Inline Citations:** Automatically detects and formats numerical sources (e.g., `[1]`, `[2]`) in chat replies, rendering them as interactive inline badge components with hover tooltips identifying the source document context.
 
 ### 🐍 Local Python Sandbox
 A completely isolated local code execution environment. Hit "Run Code" on any Python block to execute it via a secure local subprocess and see output and plots streamed live directly in your chat.
@@ -76,6 +79,7 @@ A dedicated side-workspace for writing documents, editing source code, and previ
 - **Multi-Format Previews:** Instantly render Markdown documents, HTML drafts (sandboxed inside an iframe), and Mermaid flowcharts.
 - **Version Snapshots & Diffs:** Log history checkpoints with a split-screen version comparison slider to view diff changes.
 - **AI Document Skills:** AI agents automatically read/write to the active canvas using dedicated editor access skills.
+- **Chat-to-Note Bookmarking:** Click the bookmark icon on any assistant message to save its contents directly to your Notes. It strips raw thinking/thought blocks, links the note to the conversation/notebook, and saves it in the Canvas.
 
 ### ⚡ Prompt Library Templates
 Create, categorize, and autocomplete template shortcuts.
@@ -162,6 +166,8 @@ Start both the frontend and backend simultaneously using the root launcher:
 .\.ai
 ```
 *(On Unix/macOS, simply use `npm run .ai`)*
+
+The dev runner handles sequential boot coordination: it pre-loads machine learning models eagerly, starts the Next.js frontend only when the FastAPI server is fully ready, and displays a custom colored ASCII art confirmation when all servers are live.
 
 ### 3. Access the Platform
 

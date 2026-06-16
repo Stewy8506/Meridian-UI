@@ -537,6 +537,25 @@ export function ChatArea() {
     toast.success("Feedback recorded");
   };
 
+  const handleSaveNote = async (content: string) => {
+    try {
+      const activeKbId = activeChatId ? activeKbIds[activeChatId]?.[0] : null;
+      
+      await apiRequest("/api/canvas", {
+        method: "POST",
+        body: JSON.stringify({
+          filename: `Saved Note - ${new Date().toLocaleDateString()}`,
+          content,
+          conversation_id: activeChatId || null,
+          knowledge_base_id: activeKbId || null
+        })
+      });
+      toast.success("Saved to Notes");
+    } catch (err: any) {
+      toast.error(`Failed to save note: ${err.message}`);
+    }
+  };
+
   const renderInputForm = () => {
     return (
       <div className="max-w-2xl mx-auto w-full relative border border-border rounded-xl bg-card focus-within:border-foreground/20 transition-colors spotlight-border">
@@ -772,6 +791,7 @@ export function ChatArea() {
                 onEdit={handleEditMessage}
                 onRegenerate={handleRegenerateResponse}
                 onReaction={handleReactionChange}
+                onSaveNote={handleSaveNote}
               />
             ))
           )}

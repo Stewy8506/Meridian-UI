@@ -26,7 +26,7 @@ export function RagToggle() {
       const data = await apiRequest<KB[]>("/api/knowledge");
       setKbs(data);
     } catch (err) {
-      console.error("Failed to load collections:", err);
+      console.error("Failed to load notebooks:", err);
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export function RagToggle() {
                 </div>
               ) : kbs.length === 0 ? (
                 <div className="text-center py-3 text-[10px] text-muted-foreground">
-                  No collections yet.
+                  No notebooks yet.
                 </div>
               ) : (
                 <div className="space-y-0.5 max-h-40 overflow-y-auto">
