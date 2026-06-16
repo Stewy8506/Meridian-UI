@@ -24,6 +24,7 @@ class ChatRequest(BaseModel):
     exa_api_key: Optional[str] = None
     knowledge_base_ids: Optional[List[str]] = None
     conversation_id: Optional[str] = None
+    user_timezone: Optional[str] = None
 
 def estimate_tokens(text: str) -> int:
     # ~4 characters per token as a rough average heuristic
@@ -92,14 +93,26 @@ async def chat_completions(
                 context_str = Retriever.format_context(results)
 
     # Inject context into latest user message if retrieved
+    messages_copy = [dict(msg) for msg in request.messages]
     if context_str:
-        messages_copy = [dict(msg) for msg in request.messages]
         for msg in reversed(messages_copy):
             if msg.get("role") == "user":
                 msg["content"] = f"{context_str}\n\nUser Question:\n{msg.get('content', '')}"
                 break
-    else:
-        messages_copy = request.messages
+
+    # Inject timezone into system message
+    if request.user_timezone:
+        tz_str = f"\n\n[System Info: The user is currently in timezone: {request.user_timezone}. Prioritize localized results when searching the web or providing localized information.]"
+        
+        system_msg_found = False
+        for msg in messages_copy:
+            if msg.get("role") == "system":
+                msg["content"] = str(msg.get("content", "")) + tz_str
+                system_msg_found = True
+                break
+        
+        if not system_msg_found:
+            messages_copy.insert(0, {"role": "system", "content": tz_str.strip()})
 
     try:
         provider_instance = ProviderRegistry.get_provider(request.provider, api_key=api_key)
@@ -126,7 +139,7 @@ async def chat_completions(
                 search_provider=request.search_provider,
                 tavily_api_key=tavily_api_key,
                 exa_api_key=exa_api_key,
-                user_id=current_user.id if current_user else "default_user",
+                user_id=current_user.id if current_user is not None else "default_user",
                 conversation_id=request.conversation_id
             ):
                 if await req.is_disconnected():

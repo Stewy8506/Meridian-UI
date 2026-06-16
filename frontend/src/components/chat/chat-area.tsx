@@ -278,7 +278,8 @@ export function ChatArea() {
           const lines = chunk.split("\n");
           for (const line of lines) {
             if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6);
+              let dataStr = line.slice(6);
+              if (dataStr.endsWith("\r")) dataStr = dataStr.slice(0, -1);
               if (dataStr === "[DONE]") break;
               fullTitle += dataStr;
             }
@@ -288,6 +289,7 @@ export function ChatArea() {
 
       let cleanTitle = stripXmlTags(fullTitle.trim());
       // Clean up common AI prefixes/quotes/formatting
+      cleanTitle = cleanTitle.replace(/\[DONE\]/g, "");
       cleanTitle = cleanTitle.replace(/^(title|topic|summary):\s*/i, "");
       cleanTitle = cleanTitle.replace(/^["']|["']$/g, "");
       cleanTitle = cleanTitle.trim();
@@ -350,7 +352,8 @@ export function ChatArea() {
             top_p: topP,
             max_tokens: maxTokens,
             knowledge_base_ids: activeChatId ? activeKbIds[activeChatId] || [] : [],
-            conversation_id: activeChatId || null
+            conversation_id: activeChatId || null,
+            user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
           }),
           signal: controller.signal
         });

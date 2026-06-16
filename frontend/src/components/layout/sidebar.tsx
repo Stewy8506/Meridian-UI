@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   Plus, Trash2, Pin, Search,
   ChevronDown, ChevronRight, MoreVertical, X, FolderMinus,
-  Settings, LogOut, FolderPlus, Folder, Swords, Workflow, BarChart2, MessageSquare
+  Settings, LogOut, FolderPlus, Folder, Swords, Workflow, BarChart2, MessageSquare, Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -30,6 +30,7 @@ export function Sidebar() {
     deleteFolder,
     addChatToFolder,
     removeChatFromFolder,
+    updateChatTitle,
     currentView,
     setView
   } = useAppStore();
@@ -43,6 +44,8 @@ export function Sidebar() {
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [activeMenuChatId, setActiveMenuChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -140,7 +143,34 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col flex-1 min-w-0 pr-10">
-          <span className="truncate text-[13px] font-medium text-foreground">{chat.title || "Untitled"}</span>
+          {editingChatId === chat.id ? (
+            <input
+              type="text"
+              autoFocus
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onBlur={() => {
+                if (editingTitle.trim()) {
+                  updateChatTitle(chat.id, editingTitle.trim());
+                }
+                setEditingChatId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (editingTitle.trim()) {
+                    updateChatTitle(chat.id, editingTitle.trim());
+                  }
+                  setEditingChatId(null);
+                } else if (e.key === 'Escape') {
+                  setEditingChatId(null);
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-transparent border-b border-foreground/30 text-[13px] font-medium text-foreground outline-none py-0 focus:border-foreground/60 w-full"
+            />
+          ) : (
+            <span className="truncate text-[13px] font-medium text-foreground">{chat.title || "Untitled"}</span>
+          )}
           {previewText && (
             <span className="truncate text-[10px] text-muted-foreground/50 mt-0.5 font-normal">
               {previewText}
@@ -220,6 +250,18 @@ export function Sidebar() {
                 })}
 
                 <div className="h-px bg-border my-1" />
+
+                <button
+                  onClick={() => {
+                    setEditingChatId(chat.id);
+                    setEditingTitle(chat.title || "Untitled");
+                    setActiveMenuChatId(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent text-foreground transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  <span>Rename</span>
+                </button>
 
                 <button
                   onClick={() => {

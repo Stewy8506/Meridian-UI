@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Play, Check, XCircle, Terminal, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/api-client";
 
 interface CodeOutputProps {
   code: string;
@@ -23,14 +24,12 @@ export function CodeOutput({ code, language }: CodeOutputProps) {
     setResult(null);
     
     try {
-      const response = await fetch("/api/execute", {
+      const data = await apiRequest<any>("/api/execute", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language }),
       });
       
-      const data = await response.json();
-      if (response.ok && data.status === "success") {
+      if (data.status === "success" || data.result) {
         setResult(data.result);
       } else {
         setResult({
@@ -88,7 +87,7 @@ export function CodeOutput({ code, language }: CodeOutputProps) {
           </div>
           <div className="p-3 overflow-x-auto">
             {result.stdout && (
-              <pre className="text-foreground whitespace-pre-wrap mb-2">
+              <pre className="text-zinc-100 whitespace-pre-wrap mb-2">
                 {result.stdout}
               </pre>
             )}
@@ -98,7 +97,7 @@ export function CodeOutput({ code, language }: CodeOutputProps) {
               </pre>
             )}
             {!result.stdout && !result.stderr && (
-              <span className="text-muted-foreground italic">No output</span>
+              <span className="text-zinc-400 italic">No output</span>
             )}
           </div>
         </div>
